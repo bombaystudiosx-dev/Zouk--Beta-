@@ -6,6 +6,7 @@ import type { JSONValue, Message } from 'ai';
 import React, { type RefCallback, useEffect, useState } from 'react';
 import { ClientOnly } from 'remix-utils/client-only';
 import { Menu } from '~/components/sidebar/Menu.client';
+import { ZoukSidebar } from '~/components/sidebar/ZoukSidebar';
 import { Workbench } from '~/components/workbench/Workbench.client';
 import { classNames } from '~/utils/classNames';
 import { PROVIDER_LIST } from '~/utils/constants';
@@ -14,11 +15,7 @@ import { getApiKeysFromCookies } from './APIKeyManager';
 import Cookies from 'js-cookie';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import styles from './BaseChat.module.scss';
-import { ImportButtons } from '~/components/chat/chatExportAndImport/ImportButtons';
-import { ExamplePrompts } from '~/components/chat/ExamplePrompts';
-import GitCloneButton from './GitCloneButton';
 import type { ProviderInfo } from '~/types/model';
-import StarterTemplates from './StarterTemplates';
 import type { ActionAlert, SupabaseAlert, DeployAlert, LlmErrorAlertType } from '~/types/actions';
 import DeployChatAlert from '~/components/deploy/DeployAlert';
 import ChatAlert from './ChatAlert';
@@ -105,7 +102,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       enhancePrompt,
       sendMessage,
       handleStop,
-      importChat,
+      importChat: _importChat,
       exportChat,
       uploadedFiles = [],
       setUploadedFiles,
@@ -144,6 +141,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const [transcript, setTranscript] = useState('');
     const [isModelLoading, setIsModelLoading] = useState<string | undefined>('all');
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
+    const [zoukSection, setZoukSection] = useState('home');
     const expoUrl = useStore(expoUrlAtom);
     const [qrModalOpen, setQrModalOpen] = useState(false);
 
@@ -347,30 +345,120 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         className={classNames(styles.BaseChat, 'relative flex h-full w-full overflow-hidden')}
         data-chat-visible={showChat}
       >
-        <ClientOnly>{() => <Menu />}</ClientOnly>
+        {chatStarted ? (
+          <ClientOnly>{() => <Menu />}</ClientOnly>
+        ) : (
+          <ZoukSidebar section={zoukSection} onSection={setZoukSection} />
+        )}
         <div className="flex flex-col lg:flex-row overflow-y-auto w-full h-full">
-          <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
-            {!chatStarted && (
-              <div id="intro" className="mt-[16vh] max-w-2xl mx-auto text-center px-4 lg:px-0">
-                <h1
-                  className="text-3xl lg:text-5xl font-bold mb-4 animate-fade-in"
-                  style={{ color: '#f4f4f4', letterSpacing: '-0.5px' }}
+          <div
+            className={classNames(
+              styles.Chat,
+              'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full relative',
+            )}
+          >
+            {/* ZOUK video background — only on landing home section */}
+            {!chatStarted && zoukSection === 'home' && (
+              <>
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  src="/bg-loop.mp4"
+                  poster="/bg-hero.png"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    zIndex: 0,
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.35) 100%)',
+                    zIndex: 1,
+                    pointerEvents: 'none',
+                  }}
+                />
+              </>
+            )}
+            {/* Non-home section overlay */}
+            {!chatStarted && zoukSection !== 'home' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: '#060606',
+                  zIndex: 5,
+                  padding: 32,
+                  overflowY: 'auto',
+                }}
+              >
+                <h2
+                  style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 8, textTransform: 'capitalize' }}
                 >
-                  What can I <span style={{ color: '#ec1d2e' }}>build</span> for you?
-                </h1>
-                <p className="text-md lg:text-lg mb-8 animate-fade-in animation-delay-200" style={{ color: '#9a9a9a' }}>
-                  Describe the campaign or project you want to build.
+                  {zoukSection.replace(/-/g, ' ')}
+                </h2>
+                <p style={{ color: '#b5b5b5', marginBottom: 28 }}>
+                  Coming soon — click Home or New Chat to return to the workstation.
                 </p>
+                <button
+                  onClick={() => setZoukSection('home')}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'rgba(236,29,46,0.12)',
+                    border: '1px solid #ec1d2e',
+                    borderRadius: 8,
+                    color: '#ec1d2e',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  ← Back to Home
+                </button>
               </div>
             )}
             <StickToBottom
-              className={classNames('pt-6 px-2 sm:px-6 relative', {
-                'h-full flex flex-col modern-scrollbar': chatStarted,
+              className={classNames('px-2 sm:px-6 relative', {
+                'pt-6 h-full flex flex-col modern-scrollbar': chatStarted,
+                'h-full flex flex-col': !chatStarted,
               })}
+              style={!chatStarted ? { zIndex: 2 } : undefined}
               resize="smooth"
               initial="smooth"
             >
-              <StickToBottom.Content className="flex flex-col gap-4 relative ">
+              <StickToBottom.Content className="flex flex-col gap-4 relative">
+                {!chatStarted && (
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      padding: '0 32px',
+                      marginTop: 'auto',
+                      paddingBottom: 16,
+                    }}
+                  >
+                    <h1
+                      style={{
+                        fontSize: 'clamp(28px, 4vw, 40px)',
+                        fontWeight: 600,
+                        color: '#f4f4f4',
+                        letterSpacing: '-0.5px',
+                        marginBottom: 10,
+                        textShadow: '0 2px 26px rgba(0,0,0,0.6)',
+                      }}
+                    >
+                      What can I <span style={{ color: '#ec1d2e' }}>build</span> for you?
+                    </h1>
+                    <p style={{ color: '#9a9a9a', fontSize: 16 }}>
+                      Describe the campaign or project you want to build.
+                    </p>
+                  </div>
+                )}
                 <ClientOnly>
                   {() => {
                     return chatStarted ? (
@@ -402,6 +490,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         background: 'linear-gradient(180deg, #0b0809, #060606)',
                         boxShadow: '0 0 40px rgba(236,29,46,0.12), inset 0 0 30px rgba(0,0,0,0.5)',
                         overflow: 'hidden',
+                        animation: 'breathe 3s ease-in-out infinite',
                       }
                     : undefined
                 }
@@ -485,26 +574,53 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 />
               </div>
             </StickToBottom>
-            <div className="flex flex-col justify-center">
-              {!chatStarted && (
-                <div className="flex justify-center gap-2">
-                  {ImportButtons(importChat)}
-                  <GitCloneButton importChat={importChat} />
-                </div>
-              )}
-              <div className="flex flex-col gap-5">
-                {!chatStarted &&
-                  ExamplePrompts((event, messageInput) => {
-                    if (isStreaming) {
-                      handleStop?.();
-                      return;
-                    }
-
-                    handleSendMessage?.(event, messageInput);
-                  })}
-                {!chatStarted && <StarterTemplates />}
+            {!chatStarted && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 14,
+                  padding: '0 16px 40px',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  position: 'relative',
+                  zIndex: 2,
+                }}
+              >
+                {[
+                  { emoji: '🎯', label: 'Create Ads', prompt: 'Create a multi-platform ad campaign for ' },
+                  { emoji: '🌐', label: 'Build Website', prompt: 'Build a landing page website for ' },
+                  { emoji: '⚙️', label: 'Automate Workflow', prompt: 'Automate the workflow that ' },
+                ].map((chip) => (
+                  <button
+                    key={chip.label}
+                    onClick={() => {
+                      if (handleInputChange) {
+                        handleInputChange({ target: { value: chip.prompt } } as React.ChangeEvent<HTMLTextAreaElement>);
+                      }
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '14px 22px',
+                      background: '#0b0b0b',
+                      border: '1px solid #1c1c1c',
+                      borderRadius: 14,
+                      color: '#e0e0e0',
+                      fontSize: 15,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'border-color .15s',
+                    }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.borderColor = '#ec1d2e')}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.borderColor = '#1c1c1c')}
+                  >
+                    <span>{chip.emoji}</span>
+                    {chip.label}
+                  </button>
+                ))}
               </div>
-            </div>
+            )}
           </div>
           <ClientOnly>
             {() => (
