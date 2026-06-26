@@ -352,11 +352,14 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
             {!chatStarted && (
               <div id="intro" className="mt-[16vh] max-w-2xl mx-auto text-center px-4 lg:px-0">
-                <h1 className="text-3xl lg:text-6xl font-bold text-zouk-elements-textPrimary mb-4 animate-fade-in">
-                  Where ideas begin
+                <h1
+                  className="text-3xl lg:text-5xl font-bold mb-4 animate-fade-in"
+                  style={{ color: '#f4f4f4', letterSpacing: '-0.5px' }}
+                >
+                  What can I <span style={{ color: '#ec1d2e' }}>build</span> for you?
                 </h1>
-                <p className="text-md lg:text-xl mb-8 text-zouk-elements-textSecondary animate-fade-in animation-delay-200">
-                  Bring ideas to life in seconds or get help on existing projects.
+                <p className="text-md lg:text-lg mb-8 animate-fade-in animation-delay-200" style={{ color: '#9a9a9a' }}>
+                  Describe the campaign or project you want to build.
                 </p>
               </div>
             )}
@@ -391,6 +394,17 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 className={classNames('my-auto flex flex-col gap-2 w-full max-w-chat mx-auto z-prompt mb-6', {
                   'sticky bottom-2': chatStarted,
                 })}
+                style={
+                  !chatStarted
+                    ? {
+                        borderRadius: 18,
+                        border: '1px solid rgba(236,29,46,0.45)',
+                        background: 'linear-gradient(180deg, #0b0809, #060606)',
+                        boxShadow: '0 0 40px rgba(236,29,46,0.12), inset 0 0 30px rgba(0,0,0,0.5)',
+                        overflow: 'hidden',
+                      }
+                    : undefined
+                }
               >
                 <div className="flex flex-col gap-2">
                   {deployAlert && (

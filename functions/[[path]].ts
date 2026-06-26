@@ -1,3 +1,4 @@
+// @ts-nocheck — build/server is generated at deploy time, not present in dev
 import type { ServerBuild } from '@remix-run/cloudflare';
 import { createPagesFunctionHandler } from '@remix-run/cloudflare-pages';
 

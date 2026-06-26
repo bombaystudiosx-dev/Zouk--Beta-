@@ -1,40 +1,124 @@
 import { useStore } from '@nanostores/react';
 import { ClientOnly } from 'remix-utils/client-only';
 import { chatStore } from '~/lib/stores/chat';
-import { classNames } from '~/utils/classNames';
 import { HeaderActionButtons } from './HeaderActionButtons.client';
 import { ChatDescription } from '~/lib/persistence/ChatDescription.client';
+
+const CONNECTOR_BUTTONS = [
+  {
+    label: 'f',
+    title: 'Meta Ads',
+    style: { background: '#1877f2', fontWeight: 800, color: '#fff', fontSize: 19, fontFamily: 'Georgia, serif' },
+  },
+  {
+    label: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.9">
+        <rect x="4" y="4" width="16" height="16" rx="5" />
+        <circle cx="12" cy="12" r="3.6" />
+        <circle cx="17.2" cy="6.8" r="1" fill="#fff" stroke="none" />
+      </svg>
+    ),
+    title: 'Instagram',
+    style: { background: 'linear-gradient(45deg,#feda75,#d62976,#962fbf,#4f5bd5)' },
+  },
+  {
+    label: (
+      <svg width="20" height="20" viewBox="0 0 24 24">
+        <path d="M12 3l8.5 15h-5L12 11 8.5 18h-5z" fill="#fbbc04" />
+        <path d="M12 3l4.2 7.5-4.2 7.5L7.8 10.5z" fill="#34a853" />
+        <circle cx="6" cy="16.5" r="2.4" fill="#4285f4" />
+      </svg>
+    ),
+    title: 'YouTube',
+    style: { background: '#fff' },
+  },
+];
 
 export function Header() {
   const chat = useStore(chatStore);
 
   return (
     <header
-      className={classNames('flex items-center px-4 border-b h-[var(--header-height)]', {
-        'border-transparent': !chat.started,
-        'border-zouk-elements-borderColor': chat.started,
-      })}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 20px',
+        height: 'var(--header-height)',
+        background: '#060606',
+        borderBottom: chat.started ? '1px solid #1a1a1a' : '1px solid transparent',
+        gap: 16,
+        flexShrink: 0,
+      }}
     >
-      <div className="flex items-center gap-2 z-logo text-zouk-elements-textPrimary cursor-pointer">
-        <div className="i-ph:sidebar-simple-duotone text-xl" />
-        <a href="/" className="text-2xl font-semibold text-accent flex items-center">
-          {/* <span className="i-zouk:logo-text?mask w-[46px] inline-block" /> */}
-          <img src="/logo-light-styled.png" alt="logo" className="w-[90px] inline-block dark:hidden" />
-          <img src="/logo-dark-styled.png" alt="logo" className="w-[90px] inline-block hidden dark:block" />
-        </a>
-      </div>
-      {chat.started && ( // Display ChatDescription and HeaderActionButtons only when the chat has started.
+      {/* Logo */}
+      <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
+        <img src="/logo-dark-styled.png" alt="Zouk" style={{ width: 80 }} />
+      </a>
+
+      {chat.started ? (
         <>
-          <span className="flex-1 px-4 truncate text-center text-zouk-elements-textPrimary">
+          <span
+            style={{
+              flex: 1,
+              textAlign: 'center',
+              color: '#e8e8e8',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              padding: '0 16px',
+            }}
+          >
             <ClientOnly>{() => <ChatDescription />}</ClientOnly>
           </span>
-          <ClientOnly>
-            {() => (
-              <div className="">
-                <HeaderActionButtons chatStarted={chat.started} />
-              </div>
-            )}
-          </ClientOnly>
+          <ClientOnly>{() => <HeaderActionButtons chatStarted={chat.started} />}</ClientOnly>
+        </>
+      ) : (
+        <>
+          <div style={{ flex: 1 }} />
+          {/* Connector quick-launch */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {CONNECTOR_BUTTONS.map((btn, i) => (
+              <button
+                key={i}
+                title={btn.title}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  ...btn.style,
+                }}
+              >
+                {typeof btn.label === 'string' ? btn.label : btn.label}
+              </button>
+            ))}
+            <button
+              title="All connectors"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                border: '1px solid #2a2a2a',
+                background: '#0e0e0e',
+                color: '#cfcfcf',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="6" cy="12" r="1.6" />
+                <circle cx="12" cy="12" r="1.6" />
+                <circle cx="18" cy="12" r="1.6" />
+              </svg>
+            </button>
+          </div>
         </>
       )}
     </header>
