@@ -116,12 +116,12 @@ export function createCommandsMessage(commands: ProjectCommands): Message | null
 
   if (commands.setupCommand) {
     commandString += `
-<boltAction type="shell">${commands.setupCommand}</boltAction>`;
+<zoukAction type="shell">${commands.setupCommand}</zoukAction>`;
   }
 
   if (commands.startCommand) {
     commandString += `
-<boltAction type="start">${commands.startCommand}</boltAction>
+<zoukAction type="start">${commands.startCommand}</zoukAction>
 `;
   }
 
@@ -129,17 +129,17 @@ export function createCommandsMessage(commands: ProjectCommands): Message | null
     role: 'assistant',
     content: `
 ${commands.followupMessage ? `\n\n${commands.followupMessage}` : ''}
-<boltArtifact id="project-setup" title="Project Setup">
+<zoukArtifact id="project-setup" title="Project Setup">
 ${commandString}
-</boltArtifact>`,
+</zoukArtifact>`,
     id: generateId(),
     createdAt: new Date(),
   };
 }
 
-export function escapeBoltArtifactTags(input: string) {
-  // Regular expression to match boltArtifact tags and their content
-  const regex = /(<boltArtifact[^>]*>)([\s\S]*?)(<\/boltArtifact>)/g;
+export function escapeZoukArtifactTags(input: string) {
+  // Regular expression to match zoukArtifact tags and their content
+  const regex = /(<zoukArtifact[^>]*>)([\s\S]*?)(<\/zoukArtifact>)/g;
 
   return input.replace(regex, (match, openTag, content, closeTag) => {
     // Escape the opening tag
@@ -153,9 +153,9 @@ export function escapeBoltArtifactTags(input: string) {
   });
 }
 
-export function escapeBoltAActionTags(input: string) {
-  // Regular expression to match boltArtifact tags and their content
-  const regex = /(<boltAction[^>]*>)([\s\S]*?)(<\/boltAction>)/g;
+export function escapeZoukAActionTags(input: string) {
+  // Regular expression to match zoukArtifact tags and their content
+  const regex = /(<zoukAction[^>]*>)([\s\S]*?)(<\/zoukAction>)/g;
 
   return input.replace(regex, (match, openTag, content, closeTag) => {
     // Escape the opening tag
@@ -169,8 +169,8 @@ export function escapeBoltAActionTags(input: string) {
   });
 }
 
-export function escapeBoltTags(input: string) {
-  return escapeBoltArtifactTags(escapeBoltAActionTags(input));
+export function escapeZoukTags(input: string) {
+  return escapeZoukArtifactTags(escapeZoukAActionTags(input));
 }
 
 // We have this seperate function to simplify the restore snapshot process in to one single artifact.
@@ -184,12 +184,12 @@ export function createCommandActionsString(commands: ProjectCommands): string {
 
   if (commands.setupCommand) {
     commandString += `
-<boltAction type="shell">${commands.setupCommand}</boltAction>`;
+<zoukAction type="shell">${commands.setupCommand}</zoukAction>`;
   }
 
   if (commands.startCommand) {
     commandString += `
-<boltAction type="start">${commands.startCommand}</boltAction>
+<zoukAction type="start">${commands.startCommand}</zoukAction>
 `;
   }
 

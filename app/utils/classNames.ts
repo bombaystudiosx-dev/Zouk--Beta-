@@ -1,10 +1,3 @@
-/**
- * Copyright (c) 2018 Jed Watson.
- * Licensed under the MIT License (MIT), see:
- *
- * @link http://jedwatson.github.io/classnames
- */
-
 type ClassNamesArg = undefined | null | string | number | boolean | Record<string, boolean> | ClassNamesArg[];
 
 /**

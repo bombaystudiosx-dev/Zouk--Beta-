@@ -21,7 +21,7 @@ const bugReportSchema = z.object({
       browser: z.string().optional(),
       os: z.string().optional(),
       screenResolution: z.string().optional(),
-      boltVersion: z.string().optional(),
+      zoukVersion: z.string().optional(),
       aiProviders: z.string().optional(),
       projectType: z.string().optional(),
       currentModel: z.string().optional(),
@@ -113,8 +113,8 @@ function formatIssueBody(data: z.infer<typeof bugReportSchema>): string {
       body += `- Screen: ${data.environmentInfo.screenResolution}\n`;
     }
 
-    if (data.environmentInfo.boltVersion) {
-      body += `- bolt.diy: ${data.environmentInfo.boltVersion}\n`;
+    if (data.environmentInfo.zoukVersion) {
+      body += `- zouk.diy: ${data.environmentInfo.zoukVersion}\n`;
     }
 
     if (data.environmentInfo.aiProviders) {
@@ -136,7 +136,7 @@ function formatIssueBody(data: z.infer<typeof bugReportSchema>): string {
     body += `**Contact:** ${data.contactEmail}\n\n`;
   }
 
-  body += '---\n*Submitted via bolt.diy bug report feature*';
+  body += '---\n*Submitted via zouk.diy bug report feature*';
 
   return body;
 }
@@ -194,7 +194,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     const githubToken =
       (context?.cloudflare?.env as any)?.GITHUB_BUG_REPORT_TOKEN || process.env.GITHUB_BUG_REPORT_TOKEN;
     const targetRepo =
-      (context?.cloudflare?.env as any)?.BUG_REPORT_REPO || process.env.BUG_REPORT_REPO || 'stackblitz-labs/bolt.diy';
+      (context?.cloudflare?.env as any)?.BUG_REPORT_REPO || process.env.BUG_REPORT_REPO || 'stackblitz-labs/zouk.diy';
 
     if (!githubToken) {
       console.error('GitHub bug report token not configured');
@@ -207,7 +207,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     // Initialize GitHub client
     const octokit = new Octokit({
       auth: githubToken,
-      userAgent: 'bolt.diy-bug-reporter',
+      userAgent: 'zouk.diy-bug-reporter',
     });
 
     // Create GitHub issue
