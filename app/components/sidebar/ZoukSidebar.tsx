@@ -76,6 +76,7 @@ const NAV_TASKS = [
 interface Props {
   section: string;
   onSection: (s: string) => void;
+  userName?: string;
 }
 
 function NavButton({
@@ -124,7 +125,8 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
-export function ZoukSidebar({ section, onSection }: Props) {
+export function ZoukSidebar({ section, onSection, userName = 'Workspace' }: Props) {
+  const initial = userName.charAt(0).toUpperCase();
   return (
     <div
       style={{
@@ -241,7 +243,7 @@ export function ZoukSidebar({ section, onSection }: Props) {
             flexShrink: 0,
           }}
         >
-          Z
+          {initial}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p
@@ -254,7 +256,7 @@ export function ZoukSidebar({ section, onSection }: Props) {
               textOverflow: 'ellipsis',
             }}
           >
-            Workspace
+            {userName}
           </p>
           <p style={{ fontSize: 12, color: '#6a6a6a' }}>Pro Plan</p>
         </div>

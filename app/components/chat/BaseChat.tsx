@@ -7,6 +7,13 @@ import React, { type RefCallback, useEffect, useState } from 'react';
 import { ClientOnly } from 'remix-utils/client-only';
 import { Menu } from '~/components/sidebar/Menu.client';
 import { ZoukSidebar } from '~/components/sidebar/ZoukSidebar';
+import { OnboardingOverlay } from '~/components/zouk/OnboardingOverlay';
+import { SkillsAgentsScreen } from '~/components/zouk/SkillsAgentsScreen';
+import { LibraryScreen } from '~/components/zouk/LibraryScreen';
+import { ConnectorsScreen } from '~/components/zouk/ConnectorsScreen';
+import { ProjectsScreen } from '~/components/zouk/ProjectsScreen';
+import { TasksScreen } from '~/components/zouk/TasksScreen';
+import { SettingsScreen } from '~/components/zouk/SettingsScreen';
 import { Workbench } from '~/components/workbench/Workbench.client';
 import { classNames } from '~/utils/classNames';
 import { PROVIDER_LIST } from '~/utils/constants';
@@ -142,6 +149,45 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const [isModelLoading, setIsModelLoading] = useState<string | undefined>('all');
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
     const [zoukSection, setZoukSection] = useState('home');
+
+    // Onboarding: show once until user submits name+email
+    const [showOnboarding, setShowOnboarding] = useState(() => {
+      if (typeof window === 'undefined') {
+        return false;
+      }
+
+      return !localStorage.getItem('zouk_user_name');
+    });
+    const [zoukUserName, setZoukUserName] = useState(() =>
+      typeof window !== 'undefined' ? (localStorage.getItem('zouk_user_name') ?? 'Workspace') : 'Workspace',
+    );
+    const [zoukUserEmail, setZoukUserEmail] = useState(() =>
+      typeof window !== 'undefined' ? (localStorage.getItem('zouk_user_email') ?? '') : '',
+    );
+
+    const handleOnboardingComplete = (name: string, email: string) => {
+      localStorage.setItem('zouk_user_name', name);
+      localStorage.setItem('zouk_user_email', email);
+      setZoukUserName(name);
+      setZoukUserEmail(email);
+      setShowOnboarding(false);
+    };
+
+    const handleSaveProfile = (name: string, email: string) => {
+      localStorage.setItem('zouk_user_name', name);
+      localStorage.setItem('zouk_user_email', email);
+      setZoukUserName(name);
+      setZoukUserEmail(email);
+    };
+
+    const insertChatPrompt = (prompt: string) => {
+      if (handleInputChange) {
+        handleInputChange({ target: { value: prompt } } as React.ChangeEvent<HTMLTextAreaElement>);
+      }
+
+      setZoukSection('home');
+    };
+
     const expoUrl = useStore(expoUrlAtom);
     const [qrModalOpen, setQrModalOpen] = useState(false);
 
@@ -345,10 +391,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         className={classNames(styles.BaseChat, 'relative flex h-full w-full overflow-hidden')}
         data-chat-visible={showChat}
       >
+        {showOnboarding && <OnboardingOverlay onComplete={handleOnboardingComplete} />}
         {chatStarted ? (
           <ClientOnly>{() => <Menu />}</ClientOnly>
         ) : (
-          <ZoukSidebar section={zoukSection} onSection={setZoukSection} />
+          <ZoukSidebar section={zoukSection} onSection={setZoukSection} userName={zoukUserName} />
         )}
         <div className="flex flex-col lg:flex-row overflow-y-auto w-full h-full">
           <div
@@ -387,41 +434,27 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 />
               </>
             )}
-            {/* Non-home section overlay */}
-            {!chatStarted && zoukSection !== 'home' && (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: '#060606',
-                  zIndex: 5,
-                  padding: 32,
-                  overflowY: 'auto',
-                }}
-              >
-                <h2
-                  style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 8, textTransform: 'capitalize' }}
-                >
-                  {zoukSection.replace(/-/g, ' ')}
-                </h2>
-                <p style={{ color: '#b5b5b5', marginBottom: 28 }}>
-                  Coming soon — click Home or New Chat to return to the workstation.
-                </p>
-                <button
-                  onClick={() => setZoukSection('home')}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'rgba(236,29,46,0.12)',
-                    border: '1px solid #ec1d2e',
-                    borderRadius: 8,
-                    color: '#ec1d2e',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  ← Back to Home
-                </button>
-              </div>
+            {/* ZOUK section screens */}
+            {!chatStarted && zoukSection === 'skills-agents' && <SkillsAgentsScreen onUseInChat={insertChatPrompt} />}
+            {!chatStarted && zoukSection === 'library' && <LibraryScreen />}
+            {!chatStarted && zoukSection === 'connectors' && <ConnectorsScreen />}
+            {!chatStarted && zoukSection === 'projects' && (
+              <ProjectsScreen onOpen={(name) => insertChatPrompt(`Continue working on the project: ${name}. `)} />
+            )}
+            {!chatStarted && zoukSection === 'tasks' && (
+              <TasksScreen onContinue={(name) => insertChatPrompt(`Continue the task: ${name}. `)} />
+            )}
+            {!chatStarted && zoukSection === 'settings' && (
+              <SettingsScreen
+                userName={zoukUserName}
+                userEmail={zoukUserEmail}
+                onSaveProfile={handleSaveProfile}
+                onNavigate={setZoukSection}
+              />
+            )}
+            {/* Builder-workshop: redirect to home (chat engine is the builder) */}
+            {!chatStarted && zoukSection === 'builder-workshop' && (
+              <BuilderRedirect onHome={() => setZoukSection('home')} />
             )}
             <StickToBottom
               className={classNames('px-2 sm:px-6 relative', {
@@ -634,6 +667,13 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     return <Tooltip.Provider delayDuration={200}>{baseChat}</Tooltip.Provider>;
   },
 );
+
+function BuilderRedirect({ onHome }: { onHome: () => void }) {
+  useEffect(() => {
+    onHome();
+  }, []);
+  return null;
+}
 
 function ScrollToBottom() {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
