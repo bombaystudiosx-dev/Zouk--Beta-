@@ -68,8 +68,9 @@ interface ChatBoxProps {
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   return (
     <div
+      style={{ background: '#0b0b0b', color: '#f4f4f4' }}
       className={classNames(
-        'relative bg-zouk-elements-background-depth-2 backdrop-blur p-3 rounded-lg border border-zouk-elements-borderColor relative w-full max-w-chat mx-auto z-prompt',
+        'relative p-3 rounded-lg border border-zouk-elements-borderColor relative w-full max-w-chat mx-auto z-prompt',
 
         /*
          * {
@@ -169,7 +170,8 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         </div>
       )}
       <div
-        className={classNames('relative shadow-xs border border-zouk-elements-borderColor backdrop-blur rounded-lg')}
+        style={{ background: '#0d0d0d' }}
+        className={classNames('relative shadow-xs border border-zouk-elements-borderColor rounded-lg')}
       >
         <textarea
           ref={props.textareaRef}

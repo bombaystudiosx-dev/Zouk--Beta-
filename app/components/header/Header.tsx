@@ -52,7 +52,7 @@ export function Header() {
     >
       {/* Logo */}
       <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
-        <img src="/logo-dark-styled.png" alt="Zouk" style={{ width: 80 }} />
+        <img src="/zouk-logo.png" alt="ZOUK" style={{ width: 80 }} />
       </a>
 
       {chat.started ? (

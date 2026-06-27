@@ -141,20 +141,6 @@ export function ZoukSidebar({ section, onSection, userName = 'Workspace' }: Prop
         overflow: 'hidden',
       }}
     >
-      {/* Logo */}
-      <div
-        style={{
-          padding: 16,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid #1a1a1a',
-          minHeight: 64,
-        }}
-      >
-        <img src="/logo-dark-styled.png" style={{ width: 80, height: 'auto', objectFit: 'contain' }} alt="Zouk" />
-      </div>
-
       {/* New Chat */}
       <div style={{ padding: '12px 8px' }}>
         <button

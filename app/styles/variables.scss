@@ -63,7 +63,7 @@
 
   --zouk-elements-dividerColor: theme('colors.gray.100');
 
-  --zouk-elements-prompt-background: theme('colors.alpha.white.80');
+  --zouk-elements-prompt-background: rgba(255, 255, 255, 0.8);
 
   --zouk-elements-sidebar-dropdownShadow: theme('colors.alpha.gray.10');
   --zouk-elements-sidebar-buttonBackgroundDefault: theme('colors.alpha.accent.10');
@@ -171,7 +171,7 @@
 
   --zouk-elements-dividerColor: theme('colors.gray.100');
 
-  --zouk-elements-prompt-background: theme('colors.alpha.gray.80');
+  --zouk-elements-prompt-background: #0d0d0d;
 
   --zouk-elements-sidebar-dropdownShadow: theme('colors.alpha.gray.30');
   --zouk-elements-sidebar-buttonBackgroundDefault: theme('colors.alpha.accent.10');

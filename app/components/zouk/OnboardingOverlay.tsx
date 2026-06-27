@@ -25,7 +25,7 @@ export function OnboardingOverlay({ onComplete }: Props) {
       <div style={{ width: '100%', maxWidth: 440, padding: '40px 32px' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <img
-            src="/logo-dark-styled.png"
+            src="/zouk-logo.png"
             style={{ width: 100, height: 'auto', objectFit: 'contain', marginBottom: 16 }}
             alt="Zouk"
           />
