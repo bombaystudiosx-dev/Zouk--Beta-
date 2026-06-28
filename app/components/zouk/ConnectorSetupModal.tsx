@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Cookies from 'js-cookie';
 import type { Connector } from '~/lib/zouk/connectorRegistry';
-import type { ConnectorRuntimeState } from '~/lib/zouk/connectorState';
+import type { ConnectorAccountInfo, ConnectorRuntimeState } from '~/lib/zouk/connectorState';
 
 interface Props {
   connector: Connector | null;
   runtime?: ConnectorRuntimeState;
   onClose: () => void;
-  onConnected: (connector: Connector, credential?: string) => void;
+  onConnected: (connector: Connector, credential?: string, account?: ConnectorAccountInfo) => void;
 }
+
+type VerifyState = 'idle' | 'loading' | 'success' | 'error';
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -22,26 +24,58 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
 };
 
-function saveProviderCredential(connector: Connector, credential: string) {
-  if (connector.id !== 'openrouter' || !credential.trim()) {
+/** Persist OpenRouter key into the existing chat API-key cookie. */
+function saveOpenRouterKey(credential: string) {
+  if (!credential.trim()) {
     return;
   }
 
   try {
     const current = JSON.parse(Cookies.get('apiKeys') || '{}') as Record<string, string>;
-    Cookies.set('apiKeys', JSON.stringify({ ...current, OpenRouter: credential.trim() }));
+    Cookies.set('apiKeys', JSON.stringify({ ...current, OpenRouter: credential.trim() }), { expires: 365 });
   } catch {
-    Cookies.set('apiKeys', JSON.stringify({ OpenRouter: credential.trim() }));
+    Cookies.set('apiKeys', JSON.stringify({ OpenRouter: credential.trim() }), { expires: 365 });
+  }
+}
+
+/** Persist a generic API key in the cookie store under a normalised key. */
+function saveGenericKey(connectorId: string, credential: string) {
+  if (!credential.trim()) {
+    return;
+  }
+
+  const keyName = connectorId.charAt(0).toUpperCase() + connectorId.slice(1);
+
+  try {
+    const current = JSON.parse(Cookies.get('apiKeys') || '{}') as Record<string, string>;
+    Cookies.set('apiKeys', JSON.stringify({ ...current, [keyName]: credential.trim() }), { expires: 365 });
+  } catch {
+    // ignore
   }
 }
 
 export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }: Props) {
   const [credential, setCredential] = useState('');
+  const [extra, setExtra] = useState(''); // e.g. Supabase project URL
   const [showCredential, setShowCredential] = useState(false);
+  const [verifyState, setVerifyState] = useState<VerifyState>('idle');
+  const [verifyError, setVerifyError] = useState('');
+  const [account, setAccount] = useState<ConnectorAccountInfo | undefined>(undefined);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setCredential('');
+    setExtra('');
     setShowCredential(false);
+    setVerifyState('idle');
+    setVerifyError('');
+    setAccount(undefined);
+  }, [connector?.id]);
+
+  useEffect(() => {
+    // Small delay so modal animation settles first
+    const t = setTimeout(() => inputRef.current?.focus(), 120);
+    return () => clearTimeout(t);
   }, [connector?.id]);
 
   if (!connector) {
@@ -49,12 +83,66 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
   }
 
   const isOAuth = connector.authType === 'oauth';
+  const isSupabase = connector.id === 'supabase';
   const credentialLabel = connector.authType === 'token' ? 'Access token' : 'API key';
-  const canSubmit = isOAuth || credential.trim().length >= 3;
+  const hasCredential = isOAuth || credential.trim().length >= 6;
+  const canVerify = hasCredential && (isSupabase ? extra.trim().startsWith('https://') : true);
+
+  const handleVerify = async () => {
+    if (!canVerify) {
+      return;
+    }
+
+    setVerifyState('loading');
+    setVerifyError('');
+    setAccount(undefined);
+
+    if (isOAuth) {
+      // OAuth is not wired to a real backend yet — mark locally and note next step.
+      setVerifyState('success');
+      setAccount({ name: `${connector.name} (beta marker — real OAuth pending)` });
+
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/connector/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          connector: connector.id,
+          credential: credential.trim(),
+          extra: extra.trim() || undefined,
+        }),
+      });
+
+      const data = (await res.json()) as { ok: boolean; account?: ConnectorAccountInfo; error?: string };
+
+      if (data.ok) {
+        setVerifyState('success');
+        setAccount(data.account);
+      } else {
+        setVerifyState('error');
+        setVerifyError(data.error ?? 'Verification failed');
+      }
+    } catch (err) {
+      setVerifyState('error');
+      setVerifyError(err instanceof Error ? err.message : 'Network error — check your connection');
+    }
+  };
 
   const handleConnect = () => {
-    saveProviderCredential(connector, credential);
-    onConnected(connector, credential);
+    if (verifyState !== 'success') {
+      return;
+    }
+
+    if (connector.id === 'openrouter') {
+      saveOpenRouterKey(credential);
+    } else if (!isOAuth) {
+      saveGenericKey(connector.id, credential);
+    }
+
+    onConnected(connector, isOAuth ? undefined : credential, account);
   };
 
   return (
@@ -75,7 +163,7 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
       <div
         style={{
           width: '100%',
-          maxWidth: 460,
+          maxWidth: 480,
           background: '#0a0a0a',
           border: '1px solid #242424',
           borderRadius: 14,
@@ -83,6 +171,7 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
           overflow: 'hidden',
         }}
       >
+        {/* Header */}
         <div
           style={{
             padding: '18px 20px',
@@ -96,88 +185,194 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: 24 }}>{connector.icon}</span>
             <div>
-              <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 700, margin: 0 }}>{connector.name}</h3>
+              <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 700, margin: 0 }}>Connect {connector.name}</h3>
               <p style={{ color: '#777', fontSize: 12, margin: '3px 0 0' }}>{connector.description}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: '#777', cursor: 'pointer', fontSize: 18 }}
-            aria-label="Close connector setup"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#777',
+              cursor: 'pointer',
+              fontSize: 20,
+              lineHeight: 1,
+            }}
+            aria-label="Close"
           >
             ×
           </button>
         </div>
 
+        {/* Body */}
         <div style={{ padding: 20 }}>
           {isOAuth ? (
-            <div>
-              <p style={{ color: '#cfcfcf', fontSize: 13, lineHeight: 1.55, margin: '0 0 14px' }}>
-                OAuth is staged for backend wiring. For this beta pass, this will mark {connector.name} as connected
-                locally so the UI and workflows can move forward without pretending OAuth is finished.
-              </p>
-              <div
-                style={{
-                  background: '#111',
-                  border: '1px solid #242424',
-                  borderRadius: 10,
-                  padding: 12,
-                  color: '#777',
-                  fontSize: 12,
-                  lineHeight: 1.5,
-                }}
-              >
-                Next backend step: create the OAuth callback route, exchange code for token, encrypt/store credentials
-                server-side, then replace this beta marker.
-              </div>
+            <div
+              style={{
+                background: '#111',
+                border: '1px solid #242424',
+                borderRadius: 10,
+                padding: '14px 16px',
+                color: '#aaa',
+                fontSize: 13,
+                lineHeight: 1.55,
+                marginBottom: 16,
+              }}
+            >
+              <strong style={{ color: '#e8e8e8' }}>OAuth placeholder</strong>
+              <br />
+              Real OAuth requires a backend callback route + GitHub App credentials. Clicking{' '}
+              <em>Verify &amp; Connect</em> will mark this connector locally so the rest of the UI keeps working during
+              the beta. OAuth will be replaced with a real flow in the next backend pass.
             </div>
           ) : (
-            <div>
-              <label style={{ display: 'block', color: '#e8e8e8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
-                {credentialLabel}
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  value={credential}
-                  onChange={(event) => setCredential(event.target.value)}
-                  type={showCredential ? 'text' : 'password'}
-                  placeholder={
-                    connector.id === 'openrouter'
-                      ? 'sk-or-...'
-                      : `Paste ${connector.name} ${credentialLabel.toLowerCase()}`
-                  }
-                  style={{ ...inputStyle, paddingRight: 44 }}
-                  autoFocus
-                />
-                <button
-                  onClick={() => setShowCredential((value) => !value)}
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#777',
-                    cursor: 'pointer',
-                  }}
-                  type="button"
-                >
-                  {showCredential ? '🙈' : '👁'}
-                </button>
-              </div>
-              <p style={{ color: '#777', fontSize: 12, lineHeight: 1.45, margin: '9px 0 0' }}>
-                Beta safety: Zouk stores the connection status and a masked preview locally, not the raw secret.
-                OpenRouter keys also sync into the existing chat API-key cookie so the model can run.
-              </p>
-              {runtime?.credentialPreview && (
-                <p style={{ color: '#9a9a9a', fontSize: 12, margin: '10px 0 0' }}>
-                  Saved preview: <strong>{runtime.credentialPreview}</strong>
-                </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Supabase URL field */}
+              {isSupabase && (
+                <div>
+                  <label style={{ display: 'block', color: '#e8e8e8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+                    Project URL
+                  </label>
+                  <input
+                    value={extra}
+                    onChange={(e) => {
+                      setExtra(e.target.value);
+                      setVerifyState('idle');
+                    }}
+                    type="url"
+                    placeholder="https://xxxx.supabase.co"
+                    style={inputStyle}
+                  />
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    Found under Project Settings → API → URL
+                  </p>
+                </div>
               )}
+
+              {/* Credential field */}
+              <div>
+                <label style={{ display: 'block', color: '#e8e8e8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+                  {isSupabase ? 'Anon / public key' : credentialLabel}
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    ref={inputRef}
+                    value={credential}
+                    onChange={(e) => {
+                      setCredential(e.target.value);
+                      setVerifyState('idle');
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && verifyState === 'idle') {
+                        handleVerify();
+                      }
+                    }}
+                    type={showCredential ? 'text' : 'password'}
+                    placeholder={
+                      connector.id === 'openrouter'
+                        ? 'sk-or-...'
+                        : connector.id === 'github'
+                          ? 'ghp_... or github_pat_...'
+                          : connector.id === 'vercel'
+                            ? 'your Vercel token'
+                            : connector.id === 'supabase'
+                              ? 'eyJh... (anon key)'
+                              : `Paste ${connector.name} ${credentialLabel.toLowerCase()}`
+                    }
+                    style={{
+                      ...inputStyle,
+                      paddingRight: 44,
+                      border: `1px solid ${verifyState === 'error' ? '#ef444466' : '#242424'}`,
+                    }}
+                  />
+                  <button
+                    onClick={() => setShowCredential((v) => !v)}
+                    style={{
+                      position: 'absolute',
+                      right: 12,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#777',
+                      cursor: 'pointer',
+                      fontSize: 14,
+                    }}
+                    type="button"
+                    tabIndex={-1}
+                  >
+                    {showCredential ? '🙈' : '👁'}
+                  </button>
+                </div>
+
+                {/* Key hints */}
+                {connector.id === 'github' && (
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    Create a PAT at github.com/settings/tokens — needs <code>repo</code> scope for repo access.
+                  </p>
+                )}
+                {connector.id === 'vercel' && (
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    Generate at vercel.com/account/tokens — full account scope.
+                  </p>
+                )}
+                {connector.id === 'cloudflare' && (
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    Create at dash.cloudflare.com/profile/api-tokens — use the Edit Workers template.
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
+          {/* Verify result banner */}
+          {verifyState === 'success' && account && (
+            <div
+              style={{
+                marginTop: 14,
+                padding: '10px 14px',
+                background: 'rgba(34,197,94,0.08)',
+                border: '1px solid rgba(34,197,94,0.25)',
+                borderRadius: 8,
+                fontSize: 13,
+                color: '#86efac',
+                lineHeight: 1.5,
+              }}
+            >
+              <strong style={{ color: '#22c55e' }}>✓ Verified</strong>
+              {account.name && <span style={{ marginLeft: 8 }}>{account.name}</span>}
+              {account.login && account.login !== account.name && (
+                <span style={{ color: '#555', marginLeft: 6 }}>@{account.login}</span>
+              )}
+              {account.extra && <div style={{ marginTop: 4, color: '#6a6a6a', fontSize: 12 }}>{account.extra}</div>}
+            </div>
+          )}
+
+          {verifyState === 'error' && (
+            <div
+              style={{
+                marginTop: 14,
+                padding: '10px 14px',
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.25)',
+                borderRadius: 8,
+                fontSize: 13,
+                color: '#fca5a5',
+              }}
+            >
+              <strong style={{ color: '#ef4444' }}>✗ Failed:</strong> {verifyError}
+            </div>
+          )}
+
+          {/* Stored preview */}
+          {runtime?.credentialPreview && verifyState === 'idle' && (
+            <p style={{ color: '#555', fontSize: 12, marginTop: 12 }}>
+              Current saved key: <strong style={{ color: '#777' }}>{runtime.credentialPreview}</strong>
+            </p>
+          )}
+
+          {/* Actions */}
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
             <button
               onClick={onClose}
@@ -190,29 +385,76 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
                 color: '#aaa',
                 cursor: 'pointer',
                 fontWeight: 600,
+                fontSize: 13,
               }}
             >
               Cancel
             </button>
-            <button
-              disabled={!canSubmit}
-              onClick={handleConnect}
-              style={{
-                flex: 1,
-                padding: '10px 12px',
-                background: canSubmit ? 'rgba(236,29,46,0.12)' : '#171717',
-                border: `1px solid ${canSubmit ? '#ec1d2e' : '#2a2a2a'}`,
-                borderRadius: 8,
-                color: canSubmit ? '#ec1d2e' : '#666',
-                cursor: canSubmit ? 'pointer' : 'not-allowed',
-                fontWeight: 700,
-              }}
-            >
-              {isOAuth ? 'Mark Connected' : 'Save Connection'}
-            </button>
+
+            {verifyState !== 'success' ? (
+              <button
+                disabled={!canVerify || verifyState === 'loading'}
+                onClick={handleVerify}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  background: canVerify && verifyState !== 'loading' ? 'rgba(236,29,46,0.12)' : '#171717',
+                  border: `1px solid ${canVerify && verifyState !== 'loading' ? '#ec1d2e' : '#2a2a2a'}`,
+                  borderRadius: 8,
+                  color: canVerify && verifyState !== 'loading' ? '#ec1d2e' : '#666',
+                  cursor: canVerify && verifyState !== 'loading' ? 'pointer' : 'not-allowed',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                }}
+              >
+                {verifyState === 'loading' ? (
+                  <>
+                    <span
+                      style={{
+                        width: 12,
+                        height: 12,
+                        border: '2px solid #ec1d2e44',
+                        borderTopColor: '#ec1d2e',
+                        borderRadius: '50%',
+                        animation: 'zouk-spin 0.7s linear infinite',
+                        display: 'inline-block',
+                      }}
+                    />
+                    Verifying…
+                  </>
+                ) : (
+                  'Verify Connection'
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={handleConnect}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  background: 'rgba(34,197,94,0.12)',
+                  border: '1px solid rgba(34,197,94,0.4)',
+                  borderRadius: 8,
+                  color: '#22c55e',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: 13,
+                }}
+              >
+                ✓ Save &amp; Connect
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes zouk-spin { to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }

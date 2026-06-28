@@ -9,18 +9,12 @@ export interface Connector {
   authType: AuthType;
   docsUrl?: string;
   category: 'hosting' | 'database' | 'ai' | 'auth' | 'infra' | 'email';
-  status?: ConnectorStatus;
-  connect: () => void;
-  disconnect: () => void;
-  reconnect: () => void;
-  healthCheck: () => Promise<ConnectorStatus>;
-}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-function noop() {}
+  /** If true, this connector has a real verify endpoint at /api/connector/verify */
+  verifiable?: boolean;
 
-async function defaultHealth(): Promise<ConnectorStatus> {
-  return 'disconnected';
+  /** Beta note shown in the setup modal instead of OAuth flow */
+  betaNote?: string;
 }
 
 export const CONNECTOR_REGISTRY: Connector[] = [
@@ -29,13 +23,12 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     name: 'GitHub',
     icon: '🐙',
     description: 'Source control and CI/CD pipelines.',
-    authType: 'oauth',
+
+    // PAT-based for beta — real GitHub App OAuth is a future backend pass
+    authType: 'token',
     docsUrl: 'https://docs.github.com',
     category: 'infra',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
+    verifiable: true,
   },
   {
     id: 'vercel',
@@ -45,10 +38,7 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'token',
     docsUrl: 'https://vercel.com/docs',
     category: 'hosting',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
+    verifiable: true,
   },
   {
     id: 'supabase',
@@ -58,10 +48,7 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://supabase.com/docs',
     category: 'database',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
+    verifiable: true,
   },
   {
     id: 'openrouter',
@@ -71,23 +58,7 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://openrouter.ai/docs',
     category: 'ai',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
-  },
-  {
-    id: 'netlify',
-    name: 'Netlify',
-    icon: '🌐',
-    description: 'Deploy, host, and manage web projects.',
-    authType: 'token',
-    docsUrl: 'https://docs.netlify.com',
-    category: 'hosting',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
+    verifiable: true,
   },
   {
     id: 'cloudflare',
@@ -97,10 +68,16 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://developers.cloudflare.com',
     category: 'infra',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
+    verifiable: true,
+  },
+  {
+    id: 'netlify',
+    name: 'Netlify',
+    icon: '🌐',
+    description: 'Deploy, host, and manage web projects.',
+    authType: 'token',
+    docsUrl: 'https://docs.netlify.com',
+    category: 'hosting',
   },
   {
     id: 'railway',
@@ -110,10 +87,6 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'token',
     docsUrl: 'https://docs.railway.app',
     category: 'hosting',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
   },
   {
     id: 'render',
@@ -123,10 +96,6 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://render.com/docs',
     category: 'hosting',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
   },
   {
     id: 'neon',
@@ -136,10 +105,6 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://neon.tech/docs',
     category: 'database',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
   },
   {
     id: 'upstash',
@@ -149,10 +114,6 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'token',
     docsUrl: 'https://upstash.com/docs',
     category: 'database',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
   },
   {
     id: 'clerk',
@@ -162,10 +123,6 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://clerk.com/docs',
     category: 'auth',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
   },
   {
     id: 'resend',
@@ -175,9 +132,5 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://resend.com/docs',
     category: 'email',
-    connect: noop,
-    disconnect: noop,
-    reconnect: noop,
-    healthCheck: defaultHealth,
   },
 ];

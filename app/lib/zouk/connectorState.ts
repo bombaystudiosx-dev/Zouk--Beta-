@@ -3,6 +3,16 @@ import type { Connector, ConnectorStatus } from './connectorRegistry';
 
 const STORAGE_KEY = 'zouk_connector_state_v1';
 
+export interface ConnectorAccountInfo {
+  name?: string;
+  login?: string;
+  email?: string;
+  balance?: number;
+  currency?: string;
+  plan?: string;
+  extra?: string;
+}
+
 export interface ConnectorRuntimeState {
   status: ConnectorStatus;
   authType: Connector['authType'];
@@ -10,6 +20,7 @@ export interface ConnectorRuntimeState {
   label?: string;
   credentialPreview?: string;
   error?: string;
+  account?: ConnectorAccountInfo;
 }
 
 export type ConnectorStateMap = Record<string, ConnectorRuntimeState>;
@@ -87,18 +98,22 @@ export function useConnectorState(registry: Connector[]) {
     }));
   }, []);
 
-  const markConnected = useCallback((connector: Connector, input: ConnectorSaveInput = {}) => {
-    setState((prev) => ({
-      ...prev,
-      [connector.id]: {
-        status: 'connected',
-        authType: connector.authType,
-        lastConnectedAt: new Date().toISOString(),
-        label: input.label,
-        credentialPreview: maskCredential(input.credential),
-      },
-    }));
-  }, []);
+  const markConnected = useCallback(
+    (connector: Connector, input: ConnectorSaveInput = {}, account?: ConnectorAccountInfo) => {
+      setState((prev) => ({
+        ...prev,
+        [connector.id]: {
+          status: 'connected',
+          authType: connector.authType,
+          lastConnectedAt: new Date().toISOString(),
+          label: input.label,
+          credentialPreview: maskCredential(input.credential),
+          account,
+        },
+      }));
+    },
+    [],
+  );
 
   const markError = useCallback((connector: Connector, error: string) => {
     setState((prev) => ({

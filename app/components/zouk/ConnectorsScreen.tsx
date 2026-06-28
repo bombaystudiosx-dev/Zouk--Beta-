@@ -58,11 +58,16 @@ export function ConnectorsScreen() {
     setSelectedConnector(connector);
   };
 
-  const finishConnection = (connector: Connector, credential?: string) => {
-    markConnected(connector, {
-      credential,
-      label: connector.authType === 'oauth' ? 'OAuth beta marker' : undefined,
-    });
+  const finishConnection = (
+    connector: Connector,
+    credential?: string,
+    account?: import('~/lib/zouk/connectorState').ConnectorAccountInfo,
+  ) => {
+    markConnected(
+      connector,
+      { credential, label: connector.authType === 'oauth' ? 'OAuth beta marker' : undefined },
+      account,
+    );
     setSelectedConnector(null);
   };
 
