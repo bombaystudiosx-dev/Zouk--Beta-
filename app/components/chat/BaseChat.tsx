@@ -525,7 +525,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     !chatStarted
                       ? {
                           width: '100%',
-                          maxWidth: 560,
+                          maxWidth: 820,
                           borderRadius: 18,
                           border: '1px solid rgba(236,29,46,0.45)',
                           background: 'linear-gradient(180deg, #0b0809, #060606)',

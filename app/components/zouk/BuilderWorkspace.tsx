@@ -298,7 +298,6 @@ export function BuilderWorkspace({ onBack, zoukModel = ZOUK_PRESET_ID, setZoukMo
               borderBottom: '1px solid #1a1a1a',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
             }}
           >
             <span
@@ -312,7 +311,6 @@ export function BuilderWorkspace({ onBack, zoukModel = ZOUK_PRESET_ID, setZoukMo
             >
               AI Builder
             </span>
-            <ZoukModelPicker value={zoukModel} onChange={(id) => setZoukModel?.(id)} />
           </div>
 
           {/* Messages */}
@@ -429,10 +427,13 @@ export function BuilderWorkspace({ onBack, zoukModel = ZOUK_PRESET_ID, setZoukMo
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
                   padding: '0 8px 8px',
+                  gap: 8,
                 }}
               >
+                <ZoukModelPicker value={zoukModel} onChange={(id) => setZoukModel?.(id)} />
                 <button
                   onClick={handleSend}
                   disabled={!prompt.trim()}
@@ -446,6 +447,7 @@ export function BuilderWorkspace({ onBack, zoukModel = ZOUK_PRESET_ID, setZoukMo
                     fontSize: 12,
                     cursor: prompt.trim() ? 'pointer' : 'not-allowed',
                     transition: 'all .15s',
+                    flexShrink: 0,
                   }}
                 >
                   Build ↑

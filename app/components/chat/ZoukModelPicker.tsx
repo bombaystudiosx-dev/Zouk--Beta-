@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MODEL_GROUPS, COST_BADGE, SPEED_LABEL, getModelDisplay, ZOUK_PRESET_ID } from '~/lib/zouk/modelRegistry';
 
+const LS_KEY = 'zouk_selected_model';
+
 interface Props {
   value: string;
   onChange: (modelId: string) => void;
@@ -26,6 +28,17 @@ export function ZoukModelPicker({ value, onChange, disabled }: Props) {
 
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  function handleSelect(modelId: string) {
+    try {
+      localStorage.setItem(LS_KEY, modelId);
+    } catch {
+      // ignore
+    }
+
+    onChange(modelId);
+    setOpen(false);
+  }
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
@@ -67,7 +80,7 @@ export function ZoukModelPicker({ value, onChange, disabled }: Props) {
             position: 'absolute',
             bottom: 'calc(100% + 8px)',
             left: 0,
-            width: 280,
+            width: 300,
             background: '#0e0e0e',
             border: '1px solid #1e1e1e',
             borderRadius: 10,
@@ -93,14 +106,12 @@ export function ZoukModelPicker({ value, onChange, disabled }: Props) {
               {group.models.map((model) => {
                 const isActive = value === model.id;
                 const cost = COST_BADGE[model.cost];
+                const isZouk = model.id === ZOUK_PRESET_ID;
 
                 return (
                   <button
                     key={model.id}
-                    onClick={() => {
-                      onChange(model.id);
-                      setOpen(false);
-                    }}
+                    onClick={() => handleSelect(model.id)}
                     style={{
                       width: '100%',
                       display: 'flex',
@@ -128,13 +139,28 @@ export function ZoukModelPicker({ value, onChange, disabled }: Props) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400 }}>{model.displayName}</span>
-                        {model.id === ZOUK_PRESET_ID && (
+                        {isZouk && (
                           <span
                             style={{
                               fontSize: 9,
                               padding: '1px 5px',
-                              background: 'rgba(236,29,46,0.15)',
-                              border: '1px solid rgba(236,29,46,0.3)',
+                              background: 'rgba(34,197,94,0.15)',
+                              border: '1px solid rgba(34,197,94,0.3)',
+                              borderRadius: 4,
+                              color: '#22c55e',
+                              fontWeight: 700,
+                            }}
+                          >
+                            FREE
+                          </span>
+                        )}
+                        {isZouk && (
+                          <span
+                            style={{
+                              fontSize: 9,
+                              padding: '1px 5px',
+                              background: 'rgba(236,29,46,0.12)',
+                              border: '1px solid rgba(236,29,46,0.25)',
                               borderRadius: 4,
                               color: '#ec1d2e',
                               fontWeight: 600,
@@ -143,7 +169,7 @@ export function ZoukModelPicker({ value, onChange, disabled }: Props) {
                             DEFAULT
                           </span>
                         )}
-                        {model.badge && model.id !== ZOUK_PRESET_ID && (
+                        {model.badge && !isZouk && (
                           <span
                             style={{
                               fontSize: 9,
@@ -180,4 +206,12 @@ export function ZoukModelPicker({ value, onChange, disabled }: Props) {
       )}
     </div>
   );
+}
+
+export function getPersistedModel(): string {
+  try {
+    return localStorage.getItem(LS_KEY) ?? ZOUK_PRESET_ID;
+  } catch {
+    return ZOUK_PRESET_ID;
+  }
 }

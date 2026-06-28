@@ -26,7 +26,7 @@ export const ZOUK_PROVIDER_NAME = 'OpenRouter';
 
 export const MODEL_GROUPS: ModelGroup[] = [
   {
-    label: 'Recommended',
+    label: 'ZOUK — Free',
     emoji: '⭐',
     models: [
       {
@@ -34,13 +34,40 @@ export const MODEL_GROUPS: ModelGroup[] = [
         displayName: 'ZOUK',
         speed: 'fast',
         cost: 'budget',
-        description: 'Optimized for everyday building.',
-        badge: 'Recommended',
+        description: 'Built for app building, planning, debugging, and ZOUK workflows.',
+        badge: 'Free',
       },
     ],
   },
   {
-    label: 'Fast',
+    label: 'OpenRouter Free Models',
+    emoji: '🆓',
+    models: [
+      {
+        id: 'google/gemini-2.5-flash:free',
+        displayName: 'Gemini 2.5 Flash (Free)',
+        speed: 'fast',
+        cost: 'budget',
+        description: 'Google free tier.',
+      },
+      {
+        id: 'meta-llama/llama-4-scout:free',
+        displayName: 'Llama 4 Scout (Free)',
+        speed: 'fast',
+        cost: 'budget',
+        description: 'Meta free tier.',
+      },
+      {
+        id: 'deepseek/deepseek-chat-v3-0324:free',
+        displayName: 'DeepSeek V3 (Free)',
+        speed: 'fast',
+        cost: 'budget',
+        description: 'DeepSeek free tier.',
+      },
+    ],
+  },
+  {
+    label: 'Fast / Budget',
     emoji: '🚀',
     models: [
       { id: 'google/gemini-2.5-flash', displayName: 'Gemini 2.5 Flash', speed: 'fast', cost: 'budget' },
@@ -49,7 +76,7 @@ export const MODEL_GROUPS: ModelGroup[] = [
     ],
   },
   {
-    label: 'Balanced',
+    label: 'Builder / Balanced',
     emoji: '⚖',
     models: [
       { id: 'anthropic/claude-sonnet-4', displayName: 'Claude Sonnet 4', speed: 'balanced', cost: 'balanced' },
@@ -58,9 +85,22 @@ export const MODEL_GROUPS: ModelGroup[] = [
     ],
   },
   {
-    label: 'Premium',
+    label: 'Deep / Advanced',
+    emoji: '🧩',
+    models: [
+      { id: 'anthropic/claude-sonnet-4-5', displayName: 'Claude Sonnet 4.5', speed: 'balanced', cost: 'balanced' },
+      { id: 'openai/o4-mini', displayName: 'OpenAI o4-mini', speed: 'balanced', cost: 'balanced' },
+      { id: 'google/gemini-2.5-pro-exp', displayName: 'Gemini 2.5 Pro Exp', speed: 'balanced', cost: 'balanced' },
+    ],
+  },
+  {
+    label: 'Elite / Premium',
     emoji: '🧠',
-    models: [{ id: 'anthropic/claude-opus-4', displayName: 'Claude Opus 4', speed: 'premium', cost: 'premium' }],
+    models: [
+      { id: 'anthropic/claude-opus-4', displayName: 'Claude Opus 4', speed: 'premium', cost: 'premium' },
+      { id: 'openai/o3', displayName: 'OpenAI o3', speed: 'premium', cost: 'premium' },
+      { id: 'google/gemini-2.5-ultra', displayName: 'Gemini 2.5 Ultra', speed: 'premium', cost: 'premium' },
+    ],
   },
 ];
 
