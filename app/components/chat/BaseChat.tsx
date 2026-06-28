@@ -456,157 +456,161 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             {!chatStarted && zoukSection === 'builder-workshop' && (
               <BuilderRedirect onHome={() => setZoukSection('home')} />
             )}
-            <StickToBottom
-              className={classNames('px-2 sm:px-6 relative', {
-                'pt-6 h-full flex flex-col modern-scrollbar': chatStarted,
-                'h-full flex flex-col': !chatStarted,
-              })}
-              style={!chatStarted ? { zIndex: 2 } : undefined}
-              resize="smooth"
-              initial="smooth"
-            >
-              <StickToBottom.Content className="flex flex-col gap-4 relative">
-                {!chatStarted && (
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: '0 32px',
-                      marginTop: 'auto',
-                      paddingBottom: 16,
-                    }}
-                  >
-                    <h1
+            {(chatStarted || zoukSection === 'home') && (
+              <StickToBottom
+                className={classNames('px-2 sm:px-6 relative', {
+                  'pt-6 h-full flex flex-col modern-scrollbar': chatStarted,
+                  'h-full flex flex-col': !chatStarted,
+                })}
+                style={!chatStarted ? { zIndex: 2 } : undefined}
+                resize="smooth"
+                initial="smooth"
+              >
+                <StickToBottom.Content className="flex flex-col gap-4 relative">
+                  {!chatStarted && (
+                    <div
                       style={{
-                        fontSize: 'clamp(28px, 4vw, 40px)',
-                        fontWeight: 600,
-                        color: '#f4f4f4',
-                        letterSpacing: '-0.5px',
-                        marginBottom: 10,
-                        textShadow: '0 2px 26px rgba(0,0,0,0.6)',
+                        textAlign: 'center',
+                        padding: '0 32px',
+                        marginTop: 'auto',
+                        paddingBottom: 16,
                       }}
                     >
-                      What can I <span style={{ color: '#ec1d2e' }}>build</span> for you?
-                    </h1>
-                    <p style={{ color: '#9a9a9a', fontSize: 16 }}>
-                      Describe the campaign or project you want to build.
-                    </p>
-                  </div>
-                )}
-                <ClientOnly>
-                  {() => {
-                    return chatStarted ? (
-                      <Messages
-                        className="flex flex-col w-full flex-1 max-w-chat pb-4 mx-auto z-1"
-                        messages={messages}
-                        isStreaming={isStreaming}
-                        append={append}
-                        chatMode={chatMode}
-                        setChatMode={setChatMode}
-                        provider={provider}
-                        model={model}
-                        addToolResult={addToolResult}
+                      <h1
+                        style={{
+                          fontSize: 'clamp(28px, 4vw, 40px)',
+                          fontWeight: 600,
+                          color: '#f4f4f4',
+                          letterSpacing: '-0.5px',
+                          marginBottom: 10,
+                          textShadow: '0 2px 26px rgba(0,0,0,0.6)',
+                        }}
+                      >
+                        What can I <span style={{ color: '#ec1d2e' }}>build</span> for you?
+                      </h1>
+                      <p style={{ color: '#9a9a9a', fontSize: 16 }}>
+                        Describe the campaign or project you want to build.
+                      </p>
+                    </div>
+                  )}
+                  <ClientOnly>
+                    {() => {
+                      return chatStarted ? (
+                        <Messages
+                          className="flex flex-col w-full flex-1 max-w-chat pb-4 mx-auto z-1"
+                          messages={messages}
+                          isStreaming={isStreaming}
+                          append={append}
+                          chatMode={chatMode}
+                          setChatMode={setChatMode}
+                          provider={provider}
+                          model={model}
+                          addToolResult={addToolResult}
+                        />
+                      ) : null;
+                    }}
+                  </ClientOnly>
+                  <ScrollToBottom />
+                </StickToBottom.Content>
+                <div
+                  className={classNames('flex flex-col gap-2 mx-auto z-prompt mb-6', {
+                    'sticky bottom-2 w-full max-w-chat': chatStarted,
+                  })}
+                  style={
+                    !chatStarted
+                      ? {
+                          width: '100%',
+                          maxWidth: 560,
+                          borderRadius: 18,
+                          border: '1px solid rgba(236,29,46,0.45)',
+                          background: 'linear-gradient(180deg, #0b0809, #060606)',
+                          boxShadow: '0 0 40px rgba(236,29,46,0.12), inset 0 0 30px rgba(0,0,0,0.5)',
+                          overflow: 'hidden',
+                          animation: 'breathe 3s ease-in-out infinite',
+                        }
+                      : undefined
+                  }
+                >
+                  <div className="flex flex-col gap-2">
+                    {deployAlert && (
+                      <DeployChatAlert
+                        alert={deployAlert}
+                        clearAlert={() => clearDeployAlert?.()}
+                        postMessage={(message: string | undefined) => {
+                          sendMessage?.({} as any, message);
+                          clearSupabaseAlert?.();
+                        }}
                       />
-                    ) : null;
-                  }}
-                </ClientOnly>
-                <ScrollToBottom />
-              </StickToBottom.Content>
-              <div
-                className={classNames('my-auto flex flex-col gap-2 w-full max-w-chat mx-auto z-prompt mb-6', {
-                  'sticky bottom-2': chatStarted,
-                })}
-                style={
-                  !chatStarted
-                    ? {
-                        borderRadius: 18,
-                        border: '1px solid rgba(236,29,46,0.45)',
-                        background: 'linear-gradient(180deg, #0b0809, #060606)',
-                        boxShadow: '0 0 40px rgba(236,29,46,0.12), inset 0 0 30px rgba(0,0,0,0.5)',
-                        overflow: 'hidden',
-                        animation: 'breathe 3s ease-in-out infinite',
-                      }
-                    : undefined
-                }
-              >
-                <div className="flex flex-col gap-2">
-                  {deployAlert && (
-                    <DeployChatAlert
-                      alert={deployAlert}
-                      clearAlert={() => clearDeployAlert?.()}
-                      postMessage={(message: string | undefined) => {
-                        sendMessage?.({} as any, message);
-                        clearSupabaseAlert?.();
-                      }}
-                    />
-                  )}
-                  {supabaseAlert && (
-                    <SupabaseChatAlert
-                      alert={supabaseAlert}
-                      clearAlert={() => clearSupabaseAlert?.()}
-                      postMessage={(message) => {
-                        sendMessage?.({} as any, message);
-                        clearSupabaseAlert?.();
-                      }}
-                    />
-                  )}
-                  {actionAlert && (
-                    <ChatAlert
-                      alert={actionAlert}
-                      clearAlert={() => clearAlert?.()}
-                      postMessage={(message) => {
-                        sendMessage?.({} as any, message);
-                        clearAlert?.();
-                      }}
-                    />
-                  )}
-                  {llmErrorAlert && <LlmErrorAlert alert={llmErrorAlert} clearAlert={() => clearLlmErrorAlert?.()} />}
+                    )}
+                    {supabaseAlert && (
+                      <SupabaseChatAlert
+                        alert={supabaseAlert}
+                        clearAlert={() => clearSupabaseAlert?.()}
+                        postMessage={(message) => {
+                          sendMessage?.({} as any, message);
+                          clearSupabaseAlert?.();
+                        }}
+                      />
+                    )}
+                    {actionAlert && (
+                      <ChatAlert
+                        alert={actionAlert}
+                        clearAlert={() => clearAlert?.()}
+                        postMessage={(message) => {
+                          sendMessage?.({} as any, message);
+                          clearAlert?.();
+                        }}
+                      />
+                    )}
+                    {llmErrorAlert && <LlmErrorAlert alert={llmErrorAlert} clearAlert={() => clearLlmErrorAlert?.()} />}
+                  </div>
+                  {progressAnnotations && <ProgressCompilation data={progressAnnotations} />}
+                  <ChatBox
+                    isModelSettingsCollapsed={isModelSettingsCollapsed}
+                    setIsModelSettingsCollapsed={setIsModelSettingsCollapsed}
+                    provider={provider}
+                    setProvider={setProvider}
+                    providerList={providerList || (PROVIDER_LIST as ProviderInfo[])}
+                    model={model}
+                    setModel={setModel}
+                    modelList={modelList}
+                    apiKeys={apiKeys}
+                    isModelLoading={isModelLoading}
+                    onApiKeysChange={onApiKeysChange}
+                    uploadedFiles={uploadedFiles}
+                    setUploadedFiles={setUploadedFiles}
+                    imageDataList={imageDataList}
+                    setImageDataList={setImageDataList}
+                    textareaRef={textareaRef}
+                    input={input}
+                    handleInputChange={handleInputChange}
+                    handlePaste={handlePaste}
+                    TEXTAREA_MIN_HEIGHT={TEXTAREA_MIN_HEIGHT}
+                    TEXTAREA_MAX_HEIGHT={TEXTAREA_MAX_HEIGHT}
+                    isStreaming={isStreaming}
+                    handleStop={handleStop}
+                    handleSendMessage={handleSendMessage}
+                    enhancingPrompt={enhancingPrompt}
+                    enhancePrompt={enhancePrompt}
+                    isListening={isListening}
+                    startListening={startListening}
+                    stopListening={stopListening}
+                    chatStarted={chatStarted}
+                    exportChat={exportChat}
+                    qrModalOpen={qrModalOpen}
+                    setQrModalOpen={setQrModalOpen}
+                    handleFileUpload={handleFileUpload}
+                    chatMode={chatMode}
+                    setChatMode={setChatMode}
+                    designScheme={designScheme}
+                    setDesignScheme={setDesignScheme}
+                    selectedElement={selectedElement}
+                    setSelectedElement={setSelectedElement}
+                    onWebSearchResult={onWebSearchResult}
+                  />
                 </div>
-                {progressAnnotations && <ProgressCompilation data={progressAnnotations} />}
-                <ChatBox
-                  isModelSettingsCollapsed={isModelSettingsCollapsed}
-                  setIsModelSettingsCollapsed={setIsModelSettingsCollapsed}
-                  provider={provider}
-                  setProvider={setProvider}
-                  providerList={providerList || (PROVIDER_LIST as ProviderInfo[])}
-                  model={model}
-                  setModel={setModel}
-                  modelList={modelList}
-                  apiKeys={apiKeys}
-                  isModelLoading={isModelLoading}
-                  onApiKeysChange={onApiKeysChange}
-                  uploadedFiles={uploadedFiles}
-                  setUploadedFiles={setUploadedFiles}
-                  imageDataList={imageDataList}
-                  setImageDataList={setImageDataList}
-                  textareaRef={textareaRef}
-                  input={input}
-                  handleInputChange={handleInputChange}
-                  handlePaste={handlePaste}
-                  TEXTAREA_MIN_HEIGHT={TEXTAREA_MIN_HEIGHT}
-                  TEXTAREA_MAX_HEIGHT={TEXTAREA_MAX_HEIGHT}
-                  isStreaming={isStreaming}
-                  handleStop={handleStop}
-                  handleSendMessage={handleSendMessage}
-                  enhancingPrompt={enhancingPrompt}
-                  enhancePrompt={enhancePrompt}
-                  isListening={isListening}
-                  startListening={startListening}
-                  stopListening={stopListening}
-                  chatStarted={chatStarted}
-                  exportChat={exportChat}
-                  qrModalOpen={qrModalOpen}
-                  setQrModalOpen={setQrModalOpen}
-                  handleFileUpload={handleFileUpload}
-                  chatMode={chatMode}
-                  setChatMode={setChatMode}
-                  designScheme={designScheme}
-                  setDesignScheme={setDesignScheme}
-                  selectedElement={selectedElement}
-                  setSelectedElement={setSelectedElement}
-                  onWebSearchResult={onWebSearchResult}
-                />
-              </div>
-            </StickToBottom>
+              </StickToBottom>
+            )}
             {!chatStarted && (
               <div
                 style={{
