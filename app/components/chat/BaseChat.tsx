@@ -16,6 +16,7 @@ import { TasksScreen } from '~/components/zouk/TasksScreen';
 import { SettingsScreen } from '~/components/zouk/SettingsScreen';
 import { BuilderWorkspace } from '~/components/zouk/BuilderWorkspace';
 import { AgentModeScreen } from '~/components/zouk/AgentModeScreen';
+import { DownloadScreen } from '~/components/zouk/DownloadScreen';
 import { Workbench } from '~/components/workbench/Workbench.client';
 import { classNames } from '~/utils/classNames';
 import { PROVIDER_LIST } from '~/utils/constants';
@@ -433,6 +434,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             )}
             {/* ZOUK section screens */}
             {!chatStarted && zoukSection === 'agent-mode' && <AgentModeScreen />}
+            {!chatStarted && zoukSection === 'download' && <DownloadScreen />}
             {!chatStarted && zoukSection === 'skills-agents' && <SkillsAgentsScreen onUseInChat={insertChatPrompt} />}
             {!chatStarted && zoukSection === 'library' && <LibraryScreen />}
             {!chatStarted && zoukSection === 'connectors' && <ConnectorsScreen />}
