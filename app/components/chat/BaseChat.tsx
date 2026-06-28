@@ -464,7 +464,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
               <StickToBottom
                 className={classNames('px-2 sm:px-6 relative', {
                   'pt-6 h-full flex flex-col modern-scrollbar': chatStarted,
-                  'h-full flex flex-col': !chatStarted,
+                  'h-full flex flex-col pb-6': !chatStarted,
                 })}
                 style={!chatStarted ? { zIndex: 2 } : undefined}
                 resize="smooth"
@@ -472,7 +472,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
               >
                 <StickToBottom.Content className="flex flex-col gap-4 relative">
                   {/* Spacer reserves top area so center branding (ring/logo) stays visible */}
-                  {!chatStarted && <div style={{ minHeight: '38vh' }} />}
+                  {!chatStarted && <div style={{ minHeight: '22vh' }} />}
                   {!chatStarted && (
                     <div
                       style={{
