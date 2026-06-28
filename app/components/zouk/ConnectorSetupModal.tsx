@@ -84,9 +84,13 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
 
   const isOAuth = connector.authType === 'oauth';
   const isSupabase = connector.id === 'supabase';
+  const isUpstash = connector.id === 'upstash';
   const credentialLabel = connector.authType === 'token' ? 'Access token' : 'API key';
   const hasCredential = isOAuth || credential.trim().length >= 6;
-  const canVerify = hasCredential && (isSupabase ? extra.trim().startsWith('https://') : true);
+  const canVerify =
+    hasCredential &&
+    (isSupabase ? extra.trim().startsWith('https://') : true) &&
+    (isUpstash ? extra.trim().includes('@') : true);
 
   const handleVerify = async () => {
     if (!canVerify) {
@@ -228,6 +232,28 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Upstash email field */}
+              {isUpstash && (
+                <div>
+                  <label style={{ display: 'block', color: '#e8e8e8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+                    Account email
+                  </label>
+                  <input
+                    value={extra}
+                    onChange={(e) => {
+                      setExtra(e.target.value);
+                      setVerifyState('idle');
+                    }}
+                    type="email"
+                    placeholder="you@example.com"
+                    style={inputStyle}
+                  />
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    The email you use to log in at console.upstash.com
+                  </p>
+                </div>
+              )}
+
               {/* Supabase URL field */}
               {isSupabase && (
                 <div>
@@ -320,6 +346,41 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
                 {connector.id === 'cloudflare' && (
                   <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
                     Create at dash.cloudflare.com/profile/api-tokens — use the Edit Workers template.
+                  </p>
+                )}
+                {connector.id === 'netlify' && (
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    Create a personal access token at app.netlify.com/user/applications.
+                  </p>
+                )}
+                {connector.id === 'railway' && (
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    Create a token at railway.app/account/tokens.
+                  </p>
+                )}
+                {connector.id === 'render' && (
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    Create an API key at dashboard.render.com/u/account/api-keys.
+                  </p>
+                )}
+                {connector.id === 'neon' && (
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    Create an API key at console.neon.tech/app/settings/api-keys.
+                  </p>
+                )}
+                {connector.id === 'upstash' && (
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    API key found at console.upstash.com → Account → API Keys.
+                  </p>
+                )}
+                {connector.id === 'clerk' && (
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    Secret key (sk_test_… or sk_live_…) from dashboard.clerk.com → API Keys.
+                  </p>
+                )}
+                {connector.id === 'resend' && (
+                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                    Create an API key at resend.com/api-keys.
                   </p>
                 )}
               </div>

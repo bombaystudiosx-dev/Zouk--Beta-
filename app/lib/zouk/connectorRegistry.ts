@@ -78,6 +78,7 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'token',
     docsUrl: 'https://docs.netlify.com',
     category: 'hosting',
+    verifiable: true,
   },
   {
     id: 'railway',
@@ -87,6 +88,7 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'token',
     docsUrl: 'https://docs.railway.app',
     category: 'hosting',
+    verifiable: true,
   },
   {
     id: 'render',
@@ -96,6 +98,7 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://render.com/docs',
     category: 'hosting',
+    verifiable: true,
   },
   {
     id: 'neon',
@@ -105,6 +108,7 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://neon.tech/docs',
     category: 'database',
+    verifiable: true,
   },
   {
     id: 'upstash',
@@ -114,6 +118,7 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'token',
     docsUrl: 'https://upstash.com/docs',
     category: 'database',
+    verifiable: true,
   },
   {
     id: 'clerk',
@@ -123,6 +128,7 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://clerk.com/docs',
     category: 'auth',
+    verifiable: true,
   },
   {
     id: 'resend',
@@ -132,5 +138,6 @@ export const CONNECTOR_REGISTRY: Connector[] = [
     authType: 'apikey',
     docsUrl: 'https://resend.com/docs',
     category: 'email',
+    verifiable: true,
   },
 ];
