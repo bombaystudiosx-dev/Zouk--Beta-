@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface Task {
   name: string;
@@ -7,32 +7,27 @@ interface Task {
   status: 'running' | 'done' | 'paused';
 }
 
-const DEMO_TASKS: Task[] = [
+const STORAGE_KEY = 'zouk_beta_tasks_v1';
+
+const STARTER_TASKS: Task[] = [
   {
-    name: 'Generate 10 ad variations for summer sale',
-    project: 'Q3 Meta Campaign',
-    time: '2 hours ago',
+    name: 'Audit current Zouk beta wiring',
+    project: 'Zouk Builder Demo',
+    time: 'Seeded for beta',
     status: 'done',
   },
   {
-    name: 'Write landing page copy for product launch',
-    project: 'Landing Page Redesign',
-    time: '5 hours ago',
-    status: 'done',
-  },
-  {
-    name: 'Create email sequence for trial users',
-    project: 'Email Drip Sequence',
-    time: 'Yesterday',
+    name: 'Connect OpenRouter and test ZOUK model',
+    project: 'Connector Setup Pass',
+    time: 'Seeded for beta',
     status: 'paused',
   },
   {
-    name: 'Build responsive pricing table component',
-    project: 'Landing Page Redesign',
-    time: '2 days ago',
-    status: 'done',
+    name: 'Prepare Vercel/Supabase deployment handoff',
+    project: 'Connector Setup Pass',
+    time: 'Seeded for beta',
+    status: 'paused',
   },
-  { name: 'Automate Instagram post scheduling', project: 'Q3 Meta Campaign', time: '3 days ago', status: 'done' },
 ];
 
 const STATUS_COLORS: Record<Task['status'], { bg: string; color: string; label: string }> = {
@@ -41,12 +36,66 @@ const STATUS_COLORS: Record<Task['status'], { bg: string; color: string; label: 
   paused: { bg: '#1a1a1a', color: '#9a9a9a', label: 'Paused' },
 };
 
+function readTasks(): Task[] {
+  if (typeof window === 'undefined') {
+    return STARTER_TASKS;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Task[]) : STARTER_TASKS;
+  } catch {
+    return STARTER_TASKS;
+  }
+}
+
+function writeTasks(tasks: Task[]) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+}
+
 interface Props {
   onContinue: (taskName: string) => void;
 }
 
 export function TasksScreen({ onContinue }: Props) {
-  const [tasks] = useState<Task[]>(DEMO_TASKS);
+  const [tasks, setTasks] = useState<Task[]>(readTasks);
+  const [taskName, setTaskName] = useState('');
+  const [projectName, setProjectName] = useState('Zouk Builder Demo');
+
+  useEffect(() => {
+    writeTasks(tasks);
+  }, [tasks]);
+
+  const createTask = () => {
+    const name = taskName.trim() || `New Zouk task ${tasks.length + 1}`;
+    setTasks((prev) => [
+      { name, project: projectName.trim() || 'General', time: 'Just now', status: 'paused' },
+      ...prev,
+    ]);
+    setTaskName('');
+  };
+
+  const cycleStatus = (name: string) => {
+    setTasks((prev) =>
+      prev.map((task) => {
+        if (task.name !== name) {
+          return task;
+        }
+
+        const next = task.status === 'paused' ? 'running' : task.status === 'running' ? 'done' : 'paused';
+
+        return { ...task, status: next, time: 'Just now' };
+      }),
+    );
+  };
+
+  const deleteTask = (name: string) => {
+    setTasks((prev) => prev.filter((task) => task.name !== name));
+  };
 
   return (
     <div
@@ -63,15 +112,89 @@ export function TasksScreen({ onContinue }: Props) {
       }}
     >
       <div style={{ maxWidth: 1400 }}>
-        <h2 style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 8 }}>All Tasks</h2>
-        <p style={{ color: '#b5b5b5', marginBottom: 28 }}>Your task history</p>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 20,
+            marginBottom: 28,
+          }}
+        >
+          <div>
+            <h2 style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Tasks</h2>
+            <p style={{ color: '#b5b5b5', marginBottom: 6 }}>Local beta task history and continuation prompts.</p>
+            <p style={{ color: '#6a6a6a', fontSize: 12 }}>
+              These persist in this browser until backend task sync is wired.
+            </p>
+          </div>
+          <div
+            style={{
+              minWidth: 360,
+              background: '#0a0a0a',
+              border: '1px solid #1a1a1a',
+              borderRadius: 12,
+              padding: 14,
+            }}
+          >
+            <input
+              value={taskName}
+              onChange={(event) => setTaskName(event.target.value)}
+              placeholder="Add a beta task..."
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                background: '#060606',
+                border: '1px solid #242424',
+                borderRadius: 8,
+                color: '#e8e8e8',
+                fontSize: 13,
+                outline: 'none',
+                marginBottom: 10,
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={projectName}
+                onChange={(event) => setProjectName(event.target.value)}
+                placeholder="Project name"
+                style={{
+                  flex: 1,
+                  padding: '9px 12px',
+                  background: '#060606',
+                  border: '1px solid #242424',
+                  borderRadius: 8,
+                  color: '#b5b5b5',
+                  fontSize: 12,
+                  outline: 'none',
+                }}
+              />
+              <button
+                onClick={createTask}
+                style={{
+                  padding: '9px 14px',
+                  background: 'rgba(236,29,46,0.12)',
+                  border: '1px solid #ec1d2e',
+                  borderRadius: 8,
+                  color: '#ec1d2e',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  cursor: 'pointer',
+                }}
+              >
+                + Add
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {tasks.map((task, i) => {
+          {tasks.map((task) => {
             const s = STATUS_COLORS[task.status];
             return (
               <div
-                key={i}
+                key={task.name}
                 style={{
                   background: '#0a0a0a',
                   border: '1px solid #1a1a1a',
@@ -90,19 +213,22 @@ export function TasksScreen({ onContinue }: Props) {
                     {task.project} · {task.time}
                   </p>
                 </div>
-                <div
+                <button
+                  onClick={() => cycleStatus(task.name)}
                   style={{
                     padding: '4px 10px',
                     background: s.bg,
+                    border: 'none',
                     borderRadius: 20,
                     fontSize: 11,
                     fontWeight: 600,
                     color: s.color,
                     whiteSpace: 'nowrap',
+                    cursor: 'pointer',
                   }}
                 >
                   {s.label}
-                </div>
+                </button>
                 <button
                   onClick={() => onContinue(task.name)}
                   style={{
@@ -118,6 +244,22 @@ export function TasksScreen({ onContinue }: Props) {
                   }}
                 >
                   Continue
+                </button>
+                <button
+                  onClick={() => deleteTask(task.name)}
+                  style={{
+                    padding: '8px 12px',
+                    background: '#111',
+                    border: '1px solid #242424',
+                    borderRadius: 6,
+                    color: '#777',
+                    fontWeight: 500,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Delete
                 </button>
               </div>
             );

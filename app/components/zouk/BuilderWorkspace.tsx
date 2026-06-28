@@ -43,53 +43,13 @@ function PreviewContent({ previewUrl }: { device: Device; previewUrl: string; se
       style={{
         width: '100%',
         height: '100%',
-        position: 'relative',
-        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'radial-gradient(ellipse at 50% 100%, #3a0a00 0%, #1a0300 40%, #000 100%)',
+        background: '#000',
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '35%',
-          background: 'linear-gradient(to top, #ff4500 0%, #c23000 20%, #7a1500 50%, transparent 100%)',
-          opacity: 0.7,
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -58%)',
-          width: '70%',
-          paddingBottom: '70%',
-          borderRadius: '50%',
-          border: '2px solid rgba(220,80,0,0.5)',
-          boxShadow: '0 0 60px rgba(220,80,0,0.4), inset 0 0 60px rgba(180,40,0,0.2)',
-          pointerEvents: 'none',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 2,
-          height: '55%',
-          background: 'linear-gradient(to top, rgba(255,120,20,0.8), rgba(255,80,0,0.4) 50%, transparent)',
-          boxShadow: '0 0 12px rgba(255,100,0,0.6)',
-          pointerEvents: 'none',
-        }}
-      />
       <img
         src="/zouk-logo.png"
         alt="ZOUK"

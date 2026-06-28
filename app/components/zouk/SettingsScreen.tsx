@@ -22,7 +22,7 @@ const PROVIDERS: ProviderDef[] = [
   {
     name: 'OpenRouter',
     label: 'OpenRouter',
-    placeholder: 'sk-or-...',
+    placeholder: 'sk-or...',
     helpUrl: 'https://openrouter.ai/keys',
     helpLabel: 'openrouter.ai/keys',
     primary: true,
@@ -96,6 +96,23 @@ function getApiKeys(): Record<string, string> {
 
 function saveApiKeys(keys: Record<string, string>) {
   Cookies.set('apiKeys', JSON.stringify(keys), { expires: 365 });
+}
+
+function resetZoukBetaData() {
+  const keysToRemove = [
+    'zouk_user_name',
+    'zouk_user_email',
+    'zouk_selected_model',
+    'zouk_temperature',
+    'zouk_max_tokens',
+    'zouk_system_prompt',
+    'zouk_connector_state_v1',
+    'zouk_beta_projects_v1',
+    'zouk_beta_tasks_v1',
+    'zouk_beta_library_v1',
+  ];
+
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
 }
 
 function ProviderRow({ def }: { def: ProviderDef }) {
@@ -663,27 +680,19 @@ export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate,
                     value: reasoning,
                     set: setReasoning,
                   },
-                  { label: 'Vision', desc: 'Allow image attachments in chat', value: vision, set: setVision },
-                ].map(({ label, desc, value, set }) => (
-                  <label
-                    key={label}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div>
-                      <p style={{ fontWeight: 600, color: '#fff', fontSize: 14, marginBottom: 2 }}>{label}</p>
-                      <p style={{ fontSize: 12, color: '#6a6a6a' }}>{desc}</p>
-                    </div>
+                  { label: 'Vision', desc: 'Allow image input and screenshot analysis', value: vision, set: setVision },
+                ].map((row) => (
+                  <label key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
                     <input
                       type="checkbox"
-                      checked={value}
-                      onChange={(e) => set(e.target.checked)}
-                      style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#ec1d2e', flexShrink: 0 }}
+                      checked={row.value}
+                      onChange={(e) => row.set(e.target.checked)}
+                      style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#ec1d2e' }}
                     />
+                    <div>
+                      <p style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{row.label}</p>
+                      <p style={{ color: '#6a6a6a', fontSize: 12 }}>{row.desc}</p>
+                    </div>
                   </label>
                 ))}
 
@@ -816,10 +825,14 @@ export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate,
             </div>
 
             <div>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: '#ff5664', marginBottom: 12 }}>Danger Zone</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: '#ff5664', marginBottom: 8 }}>Danger Zone</h3>
+              <p style={{ color: '#6a6a6a', fontSize: 12, marginBottom: 12 }}>
+                Clears only Zouk beta browser data. It will not erase unrelated localStorage from other apps on the same
+                domain.
+              </p>
               <button
                 onClick={() => {
-                  localStorage.clear();
+                  resetZoukBetaData();
                   window.location.reload();
                 }}
                 style={{
@@ -833,7 +846,7 @@ export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate,
                   fontSize: 13,
                 }}
               >
-                Reset All Local Data
+                Reset Zouk Beta Data
               </button>
             </div>
           </div>

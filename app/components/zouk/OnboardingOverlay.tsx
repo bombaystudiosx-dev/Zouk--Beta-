@@ -14,6 +14,10 @@ export function OnboardingOverlay({ onComplete }: Props) {
   const step1Ready = name.trim().length > 0 && email.includes('@');
   const step2Ready = apiKey.trim().length > 10;
 
+  const skipSetup = () => {
+    onComplete(name.trim() || 'Beta User', email.trim(), '');
+  };
+
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '12px 14px',
@@ -38,6 +42,17 @@ export function OnboardingOverlay({ onComplete }: Props) {
     cursor: enabled ? 'pointer' : 'not-allowed',
     transition: 'all .15s',
   });
+
+  const ghostButtonStyle: React.CSSProperties = {
+    background: 'none',
+    border: 'none',
+    color: '#6a6a6a',
+    fontSize: 12,
+    cursor: 'pointer',
+    marginTop: 12,
+    padding: 0,
+    textDecoration: 'underline',
+  };
 
   return (
     <div
@@ -76,7 +91,6 @@ export function OnboardingOverlay({ onComplete }: Props) {
           )}
         </div>
 
-        {/* Step indicator */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 28 }}>
           {[1, 2].map((s) => (
             <div
@@ -152,28 +166,21 @@ export function OnboardingOverlay({ onComplete }: Props) {
             <p style={{ fontSize: 12, color: '#6a6a6a', marginTop: 8 }}>
               Get your key at openrouter.ai/keys — it&apos;s free to start.
             </p>
-            <button
-              onClick={() => onComplete(name.trim(), email.trim(), '')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#6a6a6a',
-                fontSize: 12,
-                cursor: 'pointer',
-                marginTop: 8,
-                padding: 0,
-                textDecoration: 'underline',
-              }}
-            >
+            <button onClick={skipSetup} style={ghostButtonStyle}>
               Skip for now — I&apos;ll add it in Settings
             </button>
           </div>
         )}
 
         {step === 1 && (
-          <button onClick={() => step1Ready && setStep(2)} disabled={!step1Ready} style={btnStyle(step1Ready)}>
-            Continue →
-          </button>
+          <>
+            <button onClick={() => step1Ready && setStep(2)} disabled={!step1Ready} style={btnStyle(step1Ready)}>
+              Continue →
+            </button>
+            <button onClick={skipSetup} style={ghostButtonStyle}>
+              Skip setup for beta testing
+            </button>
+          </>
         )}
 
         {step === 2 && (
