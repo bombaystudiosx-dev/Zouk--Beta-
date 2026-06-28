@@ -1,80 +1,352 @@
-# zouk.diy
+# ZOUK Beta
 
-[![zouk.diy: AI-Powered Full-Stack Web Development in the Browser](./public/zouk_social_preview.svg)](https://zouk.diy)
+[![ZOUK Beta — AI Builder Workstation](./public/social_preview_index.jpg)](https://zouk.diy)
 
-Welcome to zouk.diy, the official open source version of Zouk.new, which allows you to choose the LLM that you use for each prompt! Currently, you can use OpenAI, Anthropic, Ollama, OpenRouter, Gemini, LMStudio, Mistral, xAI, HuggingFace, DeepSeek, Groq, Cohere, Together, Perplexity, Moonshot (Kimi), Hyperbolic, GitHub Models, Amazon Bedrock, and OpenAI-like providers - and it is easily extended to use any other model supported by the Vercel AI SDK! See the instructions below for running this locally and extending it to include more models.
+**ZOUK Beta** is a desktop-ready AI builder workstation built for people who want more than a prompt box.
 
------
-Check the [zouk.diy Docs](https://stackblitz-labs.github.io/zouk.diy/) for more official installation instructions and additional information.
+ZOUK is designed to help users plan, build, edit, import, and operate projects from one focused workspace. It combines AI chat, model routing, project organization, connector control, GitHub project loading, and a future permission-based Agent Mode that can take approved actions for the user.
 
------
-Also [this pinned post in our community](https://thinktank.ottomator.ai/t/videos-tutorial-helpful-content/3243) has a bunch of incredible resources for running and deploying zouk.diy yourself!
+This is not just a fork. This is the ZOUK build direction.
 
-We have also launched an experimental agent called the "zouk.diy Expert" that can answer common questions about zouk.diy. Find it here on the [oTTomator Live Agent Studio](https://studio.ottomator.ai/).
+---
 
-zouk.diy was originally started by [Cole Medin](https://www.youtube.com/@ColeMedin) but has quickly grown into a massive community effort to build the BEST open source AI coding assistant!
+## What ZOUK Is
 
-## Table of Contents
+ZOUK is an AI-powered builder environment for creating and improving apps, websites, automations, campaigns, and digital products.
 
-- [Join the Community](#join-the-community)
-- [Recent Major Additions](#recent-major-additions)
-- [Features](#features)
-- [Setup](#setup)
-- [Quick Installation](#quick-installation)
-- [Manual Installation](#manual-installation)
-- [Configuring API Keys and Providers](#configuring-api-keys-and-providers)
-- [Setup Using Git (For Developers only)](#setup-using-git-for-developers-only)
-- [Available Scripts](#available-scripts)
-- [Contributing](#contributing)
-- [Roadmap](#roadmap)
-- [FAQ](#faq)
+The goal is simple:
 
-## Join the community
+**Bring ideas to life, load existing projects, and let the user control how much action ZOUK is allowed to take.**
 
-[Join the zouk.diy community here, in the oTTomator Think Tank!](https://thinktank.ottomator.ai)
+ZOUK is being shaped into a real workstation where a user can:
 
-## Project management
+- start a new build from a prompt
+- connect AI model providers
+- organize projects and tasks
+- import GitHub repositories
+- work with app files and builder workflows
+- prepare deployment paths
+- run the desktop version on Windows, macOS, and Linux
+- eventually allow ZOUK to perform approved browser and desktop actions
 
-Zouk.diy is a community effort! Still, the core team of contributors aims at organizing the project in way that allows
-you to understand where the current areas of focus are.
+---
 
-If you want to know what we are working on, what we are planning to work on, or if you want to contribute to the
-project, please check the [project management guide](./PROJECT.md) to get started easily.
+## Product Direction
 
-## Recent Major Additions
+ZOUK is being built around three major ideas:
 
-### ✅ Completed Features
-- **19+ AI Provider Integrations** - OpenAI, Anthropic, Google, Groq, xAI, DeepSeek, Mistral, Cohere, Together, Perplexity, HuggingFace, Ollama, LM Studio, OpenRouter, Moonshot, Hyperbolic, GitHub Models, Amazon Bedrock, OpenAI-like
-- **Electron Desktop App** - Native desktop experience with full functionality
-- **Advanced Deployment Options** - Netlify, Vercel, and GitHub Pages deployment
-- **Supabase Integration** - Database management and query capabilities
-- **Data Visualization & Analysis** - Charts, graphs, and data analysis tools
-- **MCP (Model Context Protocol)** - Enhanced AI tool integration
-- **Search Functionality** - Codebase search and navigation
-- **File Locking System** - Prevents conflicts during AI code generation
-- **Diff View** - Visual representation of AI-made changes
-- **Git Integration** - Clone, import, and deployment capabilities
-- **Expo App Creation** - React Native development support
-- **Voice Prompting** - Audio input for prompts
-- **Bulk Chat Operations** - Delete multiple chats at once
-- **Project Snapshot Restoration** - Restore projects from snapshots on reload
+### 1. Builder Workspace
 
-### 🔄 In Progress / Planned
-- **File Locking & Diff Improvements** - Enhanced conflict prevention
-- **Backend Agent Architecture** - Move from single model calls to agent-based system
-- **LLM Prompt Optimization** - Better performance for smaller models
-- **Project Planning Documentation** - LLM-generated project plans in markdown
-- **VSCode Integration** - Git-like confirmations and workflows
-- **Document Upload for Knowledge** - Reference materials and coding style guides
-- **Additional Provider Integrations** - Azure OpenAI, Vertex AI, Granite
+A focused AI workspace for creating and editing projects.
 
-## Features
+Users should be able to describe what they want, choose a model, upload context, generate code, review changes, and continue building without jumping between multiple tools.
 
-- **AI-powered full-stack web development** for **NodeJS based applications** directly in your browser.
-- **Support for 19+ LLMs** with an extensible architecture to integrate additional models.
-- **Attach images to prompts** for better contextual understanding.
-- **Integrated terminal** to view output of LLM-run commands.
-- **Revert code to earlier versions** for easier debugging and quicker changes.
-- **Download projects as ZIP** for easy portability and sync to a folder on the host.
-- **Integration-ready Docker support** for a hassle-free setup.
-- **Deploy directly** to **Netlify**, **Vercel**, or **GitHub Pages**.
+### 2. Connector Center
+
+A central place for connecting the tools builders actually use.
+
+The connector system is being designed around services like:
+
+- OpenRouter
+- GitHub
+- Vercel
+- Supabase
+- Cloudflare
+- Netlify
+- Firebase
+- Stripe
+- Resend
+- Neon
+- Railway
+- Render
+
+The current connector layer supports local beta connection state. Backend actions and production OAuth flows are being added in phases.
+
+### 3. Agent Mode
+
+Agent Mode is the upcoming operator layer for ZOUK.
+
+The goal is not for ZOUK to simply view files. The goal is for ZOUK to perform approved actions for the user.
+
+Agent Mode is being designed around permission choices like:
+
+- Deny
+- Allow Once
+- Allow This Session
+- Always Allow
+
+High-risk actions should always require confirmation.
+
+Examples of future action categories:
+
+- browser navigation
+- browser form filling
+- GitHub repo import
+- GitHub file reading
+- GitHub branch and commit actions
+- local app opening
+- local file organization
+- desktop cleanup
+- downloads folder cleanup
+- deployment actions
+- system-level actions
+
+ZOUK should feel powerful, but not reckless.
+
+---
+
+## Current Build Status
+
+ZOUK Beta currently includes a working foundation for:
+
+- AI chat workspace
+- model/provider routing direction
+- OpenRouter-first ZOUK model flow
+- free, fast, deep, and elite model grouping
+- connector center foundation
+- local connector status tracking
+- onboarding skip path for beta testing
+- projects screen
+- tasks screen
+- library metadata screen
+- settings screen
+- local beta persistence
+- desktop-ready Electron structure
+- Windows, macOS, and Linux build scripts
+
+Some systems are still beta-level and intentionally staged locally until backend storage and production connector actions are added.
+
+---
+
+## In Active Build
+
+The next major ZOUK work is focused on:
+
+### Agent Mode Foundation
+
+A permission-based system that controls what ZOUK can do for the user.
+
+This includes approval modals, action categories, risk levels, session permissions, and revocable always-allow permissions.
+
+### GitHub Project Import
+
+The ability to bring existing GitHub projects into ZOUK and turn them into active workspaces.
+
+The planned flow:
+
+1. Connect or enter a GitHub repository.
+2. Parse the owner, repo, and branch.
+3. Create a ZOUK project workspace.
+4. Load repo metadata.
+5. Prepare the project for chat, editing, tasks, and future commit actions.
+
+### Desktop Downloads
+
+ZOUK is being prepared as a real downloadable desktop app for:
+
+- Windows
+- macOS
+- Linux
+
+The repository already includes Electron build commands. The next step is packaging, release artifacts, and a download experience that does not fake unavailable installers.
+
+---
+
+## Desktop Build Commands
+
+ZOUK includes Electron build commands for native desktop packaging.
+
+```bash
+pnpm electron:build:win
+pnpm electron:build:mac
+pnpm electron:build:linux
+pnpm electron:build:dist
+```
+
+Expected installer directions:
+
+- Windows: `.exe` or `.msi`
+- macOS: `.dmg`
+- Linux: `.AppImage` or `.deb`
+
+Production desktop releases should be generated through a trusted build machine or CI workflow, then attached to GitHub Releases or another secure download host.
+
+---
+
+## Local Development
+
+Install dependencies:
+
+```bash
+pnpm install
+```
+
+Run the development server:
+
+```bash
+pnpm run dev
+```
+
+Typecheck:
+
+```bash
+pnpm run typecheck
+```
+
+Lint:
+
+```bash
+pnpm run lint
+```
+
+Build:
+
+```bash
+pnpm run build
+```
+
+---
+
+## Core Scripts
+
+```bash
+pnpm run dev
+pnpm run build
+pnpm run typecheck
+pnpm run lint
+pnpm run preview
+pnpm electron:dev
+pnpm electron:build:win
+pnpm electron:build:mac
+pnpm electron:build:linux
+```
+
+---
+
+## Model Strategy
+
+ZOUK is being shaped around model choice without overwhelming the user.
+
+The intended grouping is:
+
+- Free
+- Fast
+- Deep
+- Elite
+
+ZOUK remains the default free model identity in the interface while backend model routing continues to evolve.
+
+OpenRouter is the preferred first provider for broad model access because it gives users one place to connect multiple models.
+
+---
+
+## Connector Strategy
+
+The connector center is not meant to be decoration.
+
+The long-term plan is for each connector to move through stages:
+
+1. UI presence
+2. local beta connection state
+3. credential/API key support
+4. backend action routes
+5. production OAuth
+6. secure account-level storage
+7. real actions inside the builder workflow
+
+This lets ZOUK grow from a working beta into a production workstation without pretending every connector is already fully automated.
+
+---
+
+## Agent Permission Rules
+
+ZOUK Agent Mode should follow these product rules:
+
+- Low-risk actions can support Allow Once, Allow This Session, or Always Allow.
+- Medium-risk actions can support Allow Once or project/session-based approval.
+- High-risk actions should always require confirmation.
+- Destructive actions should never run silently.
+
+Actions that should always require confirmation include:
+
+- deleting files
+- overwriting files
+- moving many files at once
+- submitting forms
+- sending messages or emails
+- making purchases
+- changing passwords
+- changing system settings
+- pushing commits
+- deploying to production
+- exposing API keys or secrets
+
+---
+
+## What ZOUK Is Not
+
+ZOUK is not meant to be a generic clone.
+
+ZOUK is not just a browser prompt-to-code page.
+
+ZOUK is being built as a branded AI builder workstation with desktop packaging, connector control, GitHub loading, and permission-based operator actions.
+
+The lane is:
+
+**AI builder workstation + connector center + GitHub project loading + Agent Mode + desktop app.**
+
+---
+
+## Roadmap
+
+Near-term roadmap:
+
+- complete Agent Mode permission foundation
+- add reusable action approval modal
+- add GitHub project import
+- create repo workspace screen
+- add desktop download screen/cards
+- clean up README and public branding
+- replace legacy fork assets with ZOUK assets
+- add real backend connector routes
+- add Supabase-backed project/task/library sync
+- add real file storage
+- add GitHub file tree loading
+- add branch and commit workflows
+- add Vercel deployment actions
+- prepare Windows/macOS/Linux releases
+
+---
+
+## Build Philosophy
+
+ZOUK should be honest about what is real now and what is being wired next.
+
+The product should not fake completed automation. It should show clear states like:
+
+- Connected
+- Permission required
+- Backend action required
+- Desktop permission required
+- Build required
+- Native agent required
+
+That keeps the product trustworthy while still making it feel powerful.
+
+---
+
+## Founder Direction
+
+ZOUK is part of the Metallic V1 product direction.
+
+The focus is on building tools that feel useful, premium, direct, and action-oriented.
+
+ZOUK should help users move from idea to working project faster, with fewer tabs, fewer disconnected tools, and more guided execution.
+
+---
+
+## License
+
+Private / unreleased product direction.
+
+Do not treat this README as final public launch copy until branding, binary assets, release links, and backend connector claims are verified.
