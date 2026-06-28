@@ -14,6 +14,7 @@ import { ConnectorsScreen } from '~/components/zouk/ConnectorsScreen';
 import { ProjectsScreen } from '~/components/zouk/ProjectsScreen';
 import { TasksScreen } from '~/components/zouk/TasksScreen';
 import { SettingsScreen } from '~/components/zouk/SettingsScreen';
+import { BuilderWorkspace } from '~/components/zouk/BuilderWorkspace';
 import { Workbench } from '~/components/workbench/Workbench.client';
 import { classNames } from '~/utils/classNames';
 import { PROVIDER_LIST } from '~/utils/constants';
@@ -142,11 +143,21 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const TEXTAREA_MAX_HEIGHT = chatStarted ? 400 : 200;
     const [apiKeys, setApiKeys] = useState<Record<string, string>>(getApiKeysFromCookies());
     const [zoukSelectedModel, setZoukSelectedModel] = useState(ZOUK_PRESET_ID);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
     const [transcript, setTranscript] = useState('');
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
     const [zoukSection, setZoukSection] = useState('home');
+
+    const handleZoukSection = (s: string) => {
+      setZoukSection(s);
+
+      // Builder gets full-screen — collapse the sidebar automatically
+      if (s === 'builder-workshop') {
+        setSidebarCollapsed(true);
+      }
+    };
 
     // Onboarding: show once until user submits name+email
     const [showOnboarding, setShowOnboarding] = useState(() => {
@@ -374,7 +385,13 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         {chatStarted ? (
           <ClientOnly>{() => <Menu />}</ClientOnly>
         ) : (
-          <ZoukSidebar section={zoukSection} onSection={setZoukSection} userName={zoukUserName} />
+          <ZoukSidebar
+            section={zoukSection}
+            onSection={handleZoukSection}
+            userName={zoukUserName}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+          />
         )}
         <div className="flex flex-col lg:flex-row overflow-y-auto w-full h-full">
           <div
@@ -428,14 +445,20 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 userName={zoukUserName}
                 userEmail={zoukUserEmail}
                 onSaveProfile={handleSaveProfile}
-                onNavigate={setZoukSection}
+                onNavigate={handleZoukSection}
                 zoukModel={zoukSelectedModel}
                 setZoukModel={setZoukSelectedModel}
               />
             )}
-            {/* Builder-workshop: redirect to home (chat engine is the builder) */}
             {!chatStarted && zoukSection === 'builder-workshop' && (
-              <BuilderRedirect onHome={() => setZoukSection('home')} />
+              <BuilderWorkspace
+                onBack={() => {
+                  setZoukSection('home');
+                  setSidebarCollapsed(false);
+                }}
+                zoukModel={zoukSelectedModel}
+                setZoukModel={setZoukSelectedModel}
+              />
             )}
             {(chatStarted || zoukSection === 'home') && (
               <StickToBottom
@@ -644,13 +667,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     return <Tooltip.Provider delayDuration={200}>{baseChat}</Tooltip.Provider>;
   },
 );
-
-function BuilderRedirect({ onHome }: { onHome: () => void }) {
-  useEffect(() => {
-    onHome();
-  }, []);
-  return null;
-}
 
 function ScrollToBottom() {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();

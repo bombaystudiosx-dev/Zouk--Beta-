@@ -77,23 +77,28 @@ interface Props {
   section: string;
   onSection: (s: string) => void;
   userName?: string;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 function NavButton({
   item,
   active,
   onClick,
+  collapsed,
 }: {
   item: { key: string; label: string; icon: React.ReactNode };
   active: boolean;
   onClick: () => void;
+  collapsed?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
+      title={collapsed ? item.label : undefined}
       style={{
         width: '100%',
-        padding: '12px 8px',
+        padding: collapsed ? '12px 0' : '12px 8px',
         background: active ? 'rgba(236,29,46,0.08)' : 'transparent',
         border: 'none',
         color: active ? '#ec1d2e' : '#b5b5b5',
@@ -101,6 +106,7 @@ function NavButton({
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'flex-start',
         gap: 12,
         borderRadius: 8,
         marginBottom: 4,
@@ -108,12 +114,16 @@ function NavButton({
       }}
     >
       {item.icon}
-      <span style={{ fontSize: 14, fontWeight: 500 }}>{item.label}</span>
+      {!collapsed && <span style={{ fontSize: 14, fontWeight: 500 }}>{item.label}</span>}
     </button>
   );
 }
 
-function SectionLabel({ children }: { children: string }) {
+function SectionLabel({ children, collapsed }: { children: string; collapsed?: boolean }) {
+  if (collapsed) {
+    return <div style={{ height: 1, background: '#1a1a1a', margin: '8px 0' }} />;
+  }
+
   return (
     <div style={{ margin: '12px 0', padding: '0 8px' }}>
       <p
@@ -125,12 +135,21 @@ function SectionLabel({ children }: { children: string }) {
   );
 }
 
-export function ZoukSidebar({ section, onSection, userName = 'Workspace' }: Props) {
+export function ZoukSidebar({
+  section,
+  onSection,
+  userName = 'Workspace',
+  collapsed = false,
+  onToggleCollapse,
+}: Props) {
   const initial = userName.charAt(0).toUpperCase();
+  const w = collapsed ? 56 : 240;
+
   return (
     <div
       style={{
-        width: 240,
+        width: w,
+        minWidth: w,
         background: '#0a0a0a',
         borderRight: '1px solid #1a1a1a',
         display: 'flex',
@@ -139,55 +158,138 @@ export function ZoukSidebar({ section, onSection, userName = 'Workspace' }: Prop
         flexShrink: 0,
         height: '100%',
         overflow: 'hidden',
+        transition: 'width .2s ease, min-width .2s ease',
       }}
     >
-      {/* New Chat */}
-      <div style={{ padding: '12px 8px' }}>
+      {/* Header: logo / collapse toggle */}
+      <div
+        style={{
+          padding: collapsed ? '12px 0' : '12px 8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'space-between',
+          gap: 8,
+        }}
+      >
+        {!collapsed && (
+          <button
+            onClick={() => onSection('home')}
+            style={{
+              flex: 1,
+              padding: 12,
+              background: 'rgba(236,29,46,0.12)',
+              border: '1px solid #ec1d2e',
+              borderRadius: 8,
+              color: '#ec1d2e',
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'all .15s',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            New Chat
+          </button>
+        )}
+
+        {/* Collapse toggle */}
         <button
-          onClick={() => onSection('home')}
+          onClick={onToggleCollapse}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           style={{
-            width: '100%',
-            padding: 12,
-            background: 'rgba(236,29,46,0.12)',
-            border: '1px solid #ec1d2e',
-            borderRadius: 8,
-            color: '#ec1d2e',
-            fontWeight: 600,
-            fontSize: 13,
+            padding: 8,
+            background: 'transparent',
+            border: '1px solid #1e1e1e',
+            borderRadius: 6,
+            color: '#6a6a6a',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 8,
+            flexShrink: 0,
             transition: 'all .15s',
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
-          New Chat
+          {collapsed ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          )}
         </button>
       </div>
 
+      {/* Collapsed home icon */}
+      {collapsed && (
+        <div style={{ padding: '0 0 8px' }}>
+          <button
+            onClick={() => onSection('home')}
+            title="New Chat"
+            style={{
+              width: '100%',
+              padding: '12px 0',
+              background: 'transparent',
+              border: 'none',
+              color: '#6a6a6a',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Nav */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: collapsed ? '0 4px' : 8 }}>
         {NAV_MAIN.map((item) => (
-          <NavButton key={item.key} item={item} active={section === item.key} onClick={() => onSection(item.key)} />
+          <NavButton
+            key={item.key}
+            item={item}
+            active={section === item.key}
+            onClick={() => onSection(item.key)}
+            collapsed={collapsed}
+          />
         ))}
 
-        <SectionLabel>PROJECTS</SectionLabel>
+        <SectionLabel collapsed={collapsed}>PROJECTS</SectionLabel>
         {NAV_PROJECTS.map((item) => (
-          <NavButton key={item.key} item={item} active={section === item.key} onClick={() => onSection(item.key)} />
+          <NavButton
+            key={item.key}
+            item={item}
+            active={section === item.key}
+            onClick={() => onSection(item.key)}
+            collapsed={collapsed}
+          />
         ))}
 
-        <SectionLabel>ALL TASKS</SectionLabel>
+        <SectionLabel collapsed={collapsed}>ALL TASKS</SectionLabel>
         {NAV_TASKS.map((item) => (
-          <NavButton key={item.key} item={item} active={section === item.key} onClick={() => onSection(item.key)} />
+          <NavButton
+            key={item.key}
+            item={item}
+            active={section === item.key}
+            onClick={() => onSection(item.key)}
+            collapsed={collapsed}
+          />
         ))}
       </div>
 
       {/* Settings */}
-      <div style={{ padding: 8, borderTop: '1px solid #1a1a1a' }}>
+      <div style={{ padding: collapsed ? '8px 4px' : 8, borderTop: '1px solid #1a1a1a' }}>
         <NavButton
           item={{
             key: 'settings',
@@ -201,52 +303,69 @@ export function ZoukSidebar({ section, onSection, userName = 'Workspace' }: Prop
           }}
           active={section === 'settings'}
           onClick={() => onSection('settings')}
+          collapsed={collapsed}
         />
       </div>
 
       {/* User card */}
-      <div
-        style={{
-          padding: 12,
-          borderTop: '1px solid #1a1a1a',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
-        <div
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #ec1d2e, #ff5664)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: 16,
-            flexShrink: 0,
-          }}
-        >
-          {initial}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p
+      {!collapsed && (
+        <div style={{ padding: 12, borderTop: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
             style={{
-              fontWeight: 600,
-              color: '#e8e8e8',
-              fontSize: 13,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #ec1d2e, #ff5664)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 16,
+              flexShrink: 0,
             }}
           >
-            {userName}
-          </p>
-          <p style={{ fontSize: 12, color: '#6a6a6a' }}>Alpha</p>
+            {initial}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p
+              style={{
+                fontWeight: 600,
+                color: '#e8e8e8',
+                fontSize: 13,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {userName}
+            </p>
+            <p style={{ fontSize: 12, color: '#6a6a6a' }}>Alpha</p>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Collapsed user avatar */}
+      {collapsed && (
+        <div style={{ padding: '8px 0', borderTop: '1px solid #1a1a1a', display: 'flex', justifyContent: 'center' }}>
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #ec1d2e, #ff5664)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 14,
+            }}
+          >
+            {initial}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
