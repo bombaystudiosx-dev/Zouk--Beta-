@@ -37,7 +37,9 @@ export function ConnectorsScreen() {
     useConnectorState(CONNECTOR_REGISTRY);
 
   const displayed =
-    activeCategory === 'All' ? CONNECTOR_REGISTRY : CONNECTOR_REGISTRY.filter((connector) => connector.category === activeCategory);
+    activeCategory === 'All'
+      ? CONNECTOR_REGISTRY
+      : CONNECTOR_REGISTRY.filter((connector) => connector.category === activeCategory);
 
   const tabStyle = (active: boolean) =>
     ({
@@ -80,15 +82,22 @@ export function ConnectorsScreen() {
     >
       <div style={{ maxWidth: 1400 }}>
         <h2 style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Connectors</h2>
-        <p style={{ color: '#b5b5b5', marginBottom: 8 }}>Connect builder tools, deploy targets, databases, and AI providers.</p>
+        <p style={{ color: '#b5b5b5', marginBottom: 8 }}>
+          Connect builder tools, deploy targets, databases, and AI providers.
+        </p>
         <p style={{ color: '#6a6a6a', marginBottom: 28, fontSize: 13 }}>
-          Beta state: {connectedCount} of {CONNECTOR_REGISTRY.length} connected. OAuth entries are staged locally until backend callbacks are added.
+          Beta state: {connectedCount} of {CONNECTOR_REGISTRY.length} connected. OAuth entries are staged locally until
+          backend callbacks are added.
         </p>
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
           {CATEGORIES.map((category) => (
-            <button key={category} onClick={() => setActiveCategory(category)} style={tabStyle(activeCategory === category)}>
-              {category === 'All' ? 'All' : CATEGORY_LABELS[category] ?? category}
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              style={tabStyle(activeCategory === category)}
+            >
+              {category === 'All' ? 'All' : (CATEGORY_LABELS[category] ?? category)}
             </button>
           ))}
         </div>
@@ -139,16 +148,22 @@ export function ConnectorsScreen() {
                   </div>
                   <div>
                     <p style={{ fontWeight: 600, color: '#fff', fontSize: 14 }}>{connector.name}</p>
-                    <p style={{ fontSize: 12, color: '#6a6a6a' }}>{CATEGORY_LABELS[connector.category] ?? connector.category}</p>
+                    <p style={{ fontSize: 12, color: '#6a6a6a' }}>
+                      {CATEGORY_LABELS[connector.category] ?? connector.category}
+                    </p>
                   </div>
                 </div>
-                <p style={{ fontSize: 13, color: '#9a9a9a', marginBottom: 10, lineHeight: 1.4 }}>{connector.description}</p>
+                <p style={{ fontSize: 13, color: '#9a9a9a', marginBottom: 10, lineHeight: 1.4 }}>
+                  {connector.description}
+                </p>
                 {runtime?.credentialPreview || runtime?.label ? (
                   <p style={{ fontSize: 12, color: '#6a6a6a', marginBottom: 12 }}>
                     Saved: {runtime.credentialPreview ?? runtime.label}
                   </p>
                 ) : (
-                  <p style={{ fontSize: 12, color: '#555', marginBottom: 12 }}>{connector.authType.toUpperCase()} setup</p>
+                  <p style={{ fontSize: 12, color: '#555', marginBottom: 12 }}>
+                    {connector.authType.toUpperCase()} setup
+                  </p>
                 )}
                 <button
                   onClick={() => (connected ? disconnect(connector) : startConnection(connector))}

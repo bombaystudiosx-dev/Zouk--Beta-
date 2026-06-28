@@ -72,7 +72,10 @@ export function TasksScreen({ onContinue }: Props) {
 
   const createTask = () => {
     const name = taskName.trim() || `New Zouk task ${tasks.length + 1}`;
-    setTasks((prev) => [{ name, project: projectName.trim() || 'General', time: 'Just now', status: 'paused' }, ...prev]);
+    setTasks((prev) => [
+      { name, project: projectName.trim() || 'General', time: 'Just now', status: 'paused' },
+      ...prev,
+    ]);
     setTaskName('');
   };
 
@@ -84,6 +87,7 @@ export function TasksScreen({ onContinue }: Props) {
         }
 
         const next = task.status === 'paused' ? 'running' : task.status === 'running' ? 'done' : 'paused';
+
         return { ...task, status: next, time: 'Just now' };
       }),
     );
@@ -108,11 +112,21 @@ export function TasksScreen({ onContinue }: Props) {
       }}
     >
       <div style={{ maxWidth: 1400 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20, marginBottom: 28 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 20,
+            marginBottom: 28,
+          }}
+        >
           <div>
             <h2 style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Tasks</h2>
             <p style={{ color: '#b5b5b5', marginBottom: 6 }}>Local beta task history and continuation prompts.</p>
-            <p style={{ color: '#6a6a6a', fontSize: 12 }}>These persist in this browser until backend task sync is wired.</p>
+            <p style={{ color: '#6a6a6a', fontSize: 12 }}>
+              These persist in this browser until backend task sync is wired.
+            </p>
           </div>
           <div
             style={{

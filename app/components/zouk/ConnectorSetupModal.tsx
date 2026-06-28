@@ -113,7 +113,8 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
           {isOAuth ? (
             <div>
               <p style={{ color: '#cfcfcf', fontSize: 13, lineHeight: 1.55, margin: '0 0 14px' }}>
-                OAuth is staged for backend wiring. For this beta pass, this will mark {connector.name} as connected locally so the UI and workflows can move forward without pretending OAuth is finished.
+                OAuth is staged for backend wiring. For this beta pass, this will mark {connector.name} as connected
+                locally so the UI and workflows can move forward without pretending OAuth is finished.
               </p>
               <div
                 style={{
@@ -126,7 +127,8 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
                   lineHeight: 1.5,
                 }}
               >
-                Next backend step: create the OAuth callback route, exchange code for token, encrypt/store credentials server-side, then replace this beta marker.
+                Next backend step: create the OAuth callback route, exchange code for token, encrypt/store credentials
+                server-side, then replace this beta marker.
               </div>
             </div>
           ) : (
@@ -139,7 +141,11 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
                   value={credential}
                   onChange={(event) => setCredential(event.target.value)}
                   type={showCredential ? 'text' : 'password'}
-                  placeholder={connector.id === 'openrouter' ? 'sk-or-...' : `Paste ${connector.name} ${credentialLabel.toLowerCase()}`}
+                  placeholder={
+                    connector.id === 'openrouter'
+                      ? 'sk-or-...'
+                      : `Paste ${connector.name} ${credentialLabel.toLowerCase()}`
+                  }
                   style={{ ...inputStyle, paddingRight: 44 }}
                   autoFocus
                 />
@@ -161,7 +167,8 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
                 </button>
               </div>
               <p style={{ color: '#777', fontSize: 12, lineHeight: 1.45, margin: '9px 0 0' }}>
-                Beta safety: Zouk stores the connection status and a masked preview locally, not the raw secret. OpenRouter keys also sync into the existing chat API-key cookie so the model can run.
+                Beta safety: Zouk stores the connection status and a masked preview locally, not the raw secret.
+                OpenRouter keys also sync into the existing chat API-key cookie so the model can run.
               </p>
               {runtime?.credentialPreview && (
                 <p style={{ color: '#9a9a9a', fontSize: 12, margin: '10px 0 0' }}>

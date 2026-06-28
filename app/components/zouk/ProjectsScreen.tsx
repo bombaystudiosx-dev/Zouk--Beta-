@@ -104,11 +104,23 @@ export function ProjectsScreen({ onOpen }: Props) {
       }}
     >
       <div style={{ maxWidth: 1400 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, marginBottom: 28 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 20,
+            marginBottom: 28,
+          }}
+        >
           <div>
             <h2 style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Projects</h2>
-            <p style={{ color: '#b5b5b5', marginBottom: 6 }}>Saved beta workspaces for builds, campaigns, and automations.</p>
-            <p style={{ color: '#6a6a6a', fontSize: 12 }}>Stored locally for beta. Backend sync can replace this later.</p>
+            <p style={{ color: '#b5b5b5', marginBottom: 6 }}>
+              Saved beta workspaces for builds, campaigns, and automations.
+            </p>
+            <p style={{ color: '#6a6a6a', fontSize: 12 }}>
+              Stored locally for beta. Backend sync can replace this later.
+            </p>
           </div>
           <div
             style={{

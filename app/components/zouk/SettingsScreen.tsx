@@ -827,7 +827,8 @@ export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate,
             <div>
               <h3 style={{ fontSize: 14, fontWeight: 600, color: '#ff5664', marginBottom: 8 }}>Danger Zone</h3>
               <p style={{ color: '#6a6a6a', fontSize: 12, marginBottom: 12 }}>
-                Clears only Zouk beta browser data. It will not erase unrelated localStorage from other apps on the same domain.
+                Clears only Zouk beta browser data. It will not erase unrelated localStorage from other apps on the same
+                domain.
               </p>
               <button
                 onClick={() => {

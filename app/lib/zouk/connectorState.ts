@@ -122,7 +122,10 @@ export function useConnectorState(registry: Connector[]) {
     }));
   }, []);
 
-  const connectedCount = useMemo(() => registry.filter((connector) => getStatus(connector.id) === 'connected').length, [registry, getStatus]);
+  const connectedCount = useMemo(
+    () => registry.filter((connector) => getStatus(connector.id) === 'connected').length,
+    [registry, getStatus],
+  );
 
   return {
     state,

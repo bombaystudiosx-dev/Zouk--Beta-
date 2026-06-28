@@ -109,7 +109,8 @@ export function LibraryScreen() {
         <h2 style={{ fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Library</h2>
         <p style={{ color: '#b5b5b5', marginBottom: 6 }}>Files, images, and assets attached to your beta workspace.</p>
         <p style={{ color: '#6a6a6a', fontSize: 12, marginBottom: 28 }}>
-          Beta note: this screen stores file metadata locally only. Raw files are not uploaded to Supabase until backend storage is wired.
+          Beta note: this screen stores file metadata locally only. Raw files are not uploaded to Supabase until backend
+          storage is wired.
         </p>
 
         <div style={{ display: 'flex', gap: 12, marginBottom: 28 }}>
@@ -148,7 +149,9 @@ export function LibraryScreen() {
         </div>
 
         {displayed.length === 0 ? (
-          <div style={{ border: '1px solid #1a1a1a', borderRadius: 12, padding: 28, color: '#777', background: '#0a0a0a' }}>
+          <div
+            style={{ border: '1px solid #1a1a1a', borderRadius: 12, padding: 28, color: '#777', background: '#0a0a0a' }}
+          >
             No library items match that search.
           </div>
         ) : (
