@@ -12,18 +12,19 @@ export interface DesktopDownloadOption {
   notes: string;
 }
 
+const RELEASES_PAGE = 'https://github.com/Internetkartel/Zouk-App/releases';
+
 const DOWNLOAD_OPTIONS: DesktopDownloadOption[] = [
   {
     platform: 'windows',
     label: 'Windows',
     icon: '🪟',
-    fileType: '.exe / .msi',
+    fileType: '.exe',
     fileTypeLabel: 'Windows Installer (.exe)',
-    status: 'build_required',
-    artifactUrl: null,
+    status: 'available',
+    artifactUrl: 'https://github.com/Internetkartel/Zouk-App/releases/download/latest/zouk-1.0.0-win-x64-setup.exe',
     buildCommand: 'pnpm electron:build:win',
-    notes:
-      'Generates a Windows installer via electron-builder. Run on a Windows machine or a CI runner with a Windows image.',
+    notes: 'x64 installer built with electron-builder. Run as administrator if Windows SmartScreen prompts.',
   },
   {
     platform: 'macos',
@@ -31,11 +32,10 @@ const DOWNLOAD_OPTIONS: DesktopDownloadOption[] = [
     icon: '🍎',
     fileType: '.dmg',
     fileTypeLabel: 'macOS Disk Image (.dmg)',
-    status: 'build_required',
-    artifactUrl: null,
+    status: 'available',
+    artifactUrl: 'https://github.com/Internetkartel/Zouk-App/releases/download/latest/Zouk-1.0.0-arm64.dmg',
     buildCommand: 'pnpm electron:build:mac',
-    notes:
-      'Generates a .dmg via electron-builder. Requires macOS build environment. Code signing and notarization are a future phase.',
+    notes: 'Apple Silicon (M1/M2/M3). Not notarized — right-click → Open on first launch to bypass Gatekeeper.',
   },
   {
     platform: 'linux',
@@ -43,10 +43,10 @@ const DOWNLOAD_OPTIONS: DesktopDownloadOption[] = [
     icon: '🐧',
     fileType: '.AppImage / .deb',
     fileTypeLabel: 'AppImage or Debian Package',
-    status: 'build_required',
-    artifactUrl: null,
+    status: 'available',
+    artifactUrl: 'https://github.com/Internetkartel/Zouk-App/releases/download/latest/zouk-1.0.0-linux-x86_64.AppImage',
     buildCommand: 'pnpm electron:build:linux',
-    notes: 'Generates an AppImage and .deb via electron-builder. Run on a Linux machine or CI runner.',
+    notes: `AppImage (universal) or .deb for Debian/Ubuntu. All builds at ${RELEASES_PAGE}`,
   },
 ];
 
