@@ -14,21 +14,29 @@ interface APIKeyManagerProps {
 // cache which stores whether the provider's API key is set via environment variable
 const providerEnvKeyStatusCache: Record<string, boolean> = {};
 
-const apiKeyMemoizeCache: { [k: string]: Record<string, string> } = {};
+const apiKeyMemoizeCache = new Map<string, Record<string, string>>();
+const API_KEY_CACHE_MAX = 5;
 
 export function getApiKeysFromCookies() {
   const storedApiKeys = Cookies.get('apiKeys');
-  let parsedKeys: Record<string, string> = {};
 
-  if (storedApiKeys) {
-    parsedKeys = apiKeyMemoizeCache[storedApiKeys];
-
-    if (!parsedKeys) {
-      parsedKeys = apiKeyMemoizeCache[storedApiKeys] = JSON.parse(storedApiKeys);
-    }
+  if (!storedApiKeys) {
+    return {} as Record<string, string>;
   }
 
-  return parsedKeys;
+  if (apiKeyMemoizeCache.has(storedApiKeys)) {
+    return apiKeyMemoizeCache.get(storedApiKeys)!;
+  }
+
+  const parsed: Record<string, string> = JSON.parse(storedApiKeys);
+
+  if (apiKeyMemoizeCache.size >= API_KEY_CACHE_MAX) {
+    apiKeyMemoizeCache.delete(apiKeyMemoizeCache.keys().next().value!);
+  }
+
+  apiKeyMemoizeCache.set(storedApiKeys, parsed);
+
+  return parsed;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -46,7 +54,7 @@ export const APIKeyManager: React.FC<APIKeyManagerProps> = ({ provider, apiKey, 
     setTempKey(savedKey);
     setApiKey(savedKey);
     setIsEditing(false);
-  }, [provider.name]);
+  }, [provider.name, setApiKey]);
 
   const checkEnvApiKey = useCallback(async () => {
     // Check cache first

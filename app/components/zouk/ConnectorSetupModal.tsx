@@ -153,7 +153,9 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
           schedulePoll(deviceCode, pollIntervalRef.current);
         }
       } catch {
-        schedulePoll(deviceCode, pollIntervalRef.current);
+        setDfError('Network error — check your connection and try again.');
+        setDfState('error');
+        stopPolling();
       }
     }, intervalSec * 1000);
   };

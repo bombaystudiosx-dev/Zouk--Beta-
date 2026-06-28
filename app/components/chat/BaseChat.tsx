@@ -196,11 +196,12 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     };
 
     const insertChatPrompt = (prompt: string) => {
-      if (handleInputChange) {
+      if (sendMessage) {
+        sendMessage({} as React.UIEvent, prompt);
+      } else if (handleInputChange) {
+        setZoukSection('home');
         handleInputChange({ target: { value: prompt } } as React.ChangeEvent<HTMLTextAreaElement>);
       }
-
-      setZoukSection('home');
     };
 
     const expoUrl = useStore(expoUrlAtom);
@@ -402,35 +403,23 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
               'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full relative',
             )}
           >
-            {/* ZOUK video background — only on landing home section */}
+            {/* ZOUK background — only on landing home section */}
             {!chatStarted && zoukSection === 'home' && (
-              <>
-                <video
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  src="/bg-loop.mp4"
-                  poster="/bg-hero.png"
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    zIndex: 0,
-                  }}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.35) 100%)',
-                    zIndex: 1,
-                    pointerEvents: 'none',
-                  }}
-                />
-              </>
+              <img
+                src="/zouk-bg.png"
+                alt=""
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center top',
+                  pointerEvents: 'none',
+                  zIndex: 0,
+                }}
+              />
             )}
             {/* ZOUK section screens */}
             {!chatStarted && zoukSection === 'agent-mode' && <AgentModeScreen />}

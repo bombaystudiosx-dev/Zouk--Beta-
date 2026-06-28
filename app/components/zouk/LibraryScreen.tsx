@@ -341,7 +341,9 @@ export function LibraryScreen() {
                       <p style={{ fontSize: 11, color: '#6a6a6a', marginBottom: 2, marginTop: 0 }}>{file.size}</p>
                       <p style={{ fontSize: 11, color: '#555', marginBottom: 10, marginTop: 0 }}>{file.addedAt}</p>
                       <button
-                        onClick={() => setFiles((prev) => prev.filter((f) => f.name !== file.name))}
+                        onClick={() =>
+                          setFiles((prev) => prev.filter((f) => !(f.name === file.name && f.addedAt === file.addedAt)))
+                        }
                         style={{
                           width: '100%',
                           padding: 6,

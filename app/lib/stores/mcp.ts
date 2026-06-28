@@ -48,13 +48,16 @@ export const useMCPStore = create<Store & Actions>((set, get) => ({
         try {
           const settings = JSON.parse(savedConfig) as MCPSettings;
           const serverTools = await updateServerConfig(settings.mcpConfig);
-          set(() => ({ settings, serverTools }));
+          set(() => ({ settings, serverTools, isInitialized: true }));
         } catch (error) {
           console.error('Error parsing saved mcp config:', error);
           set(() => ({
             error: `Error parsing saved mcp config: ${error instanceof Error ? error.message : String(error)}`,
+            isInitialized: true,
           }));
         }
+
+        return;
       } else {
         localStorage.setItem(MCP_SETTINGS_KEY, JSON.stringify(defaultSettings));
       }

@@ -30,6 +30,10 @@ export async function action({ request }: ActionFunctionArgs) {
       }),
     });
 
+    if (!res.ok) {
+      return json({ error: `GitHub API error: ${res.statusText}` }, { status: res.status });
+    }
+
     const data = await res.json();
 
     return json(data);
@@ -48,6 +52,10 @@ export async function action({ request }: ActionFunctionArgs) {
         grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
       }),
     });
+
+    if (!res.ok) {
+      return json({ error: `GitHub API error: ${res.statusText}` }, { status: res.status });
+    }
 
     const data = await res.json();
 

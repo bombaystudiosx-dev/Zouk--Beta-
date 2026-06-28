@@ -4,13 +4,15 @@ import { logStore } from './logs';
 
 // Initialize with stored connection or defaults
 const storedConnection = typeof window !== 'undefined' ? localStorage.getItem('github_connection') : null;
-const initialConnection: GitHubConnection = storedConnection
-  ? JSON.parse(storedConnection)
-  : {
-      user: null,
-      token: '',
-      tokenType: 'classic',
-    };
+let initialConnection: GitHubConnection = { user: null, token: '', tokenType: 'classic' };
+
+if (storedConnection) {
+  try {
+    initialConnection = JSON.parse(storedConnection);
+  } catch {
+    // corrupted — start fresh
+  }
+}
 
 export const githubConnection = atom<GitHubConnection>(initialConnection);
 export const isConnecting = atom<boolean>(false);

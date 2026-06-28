@@ -124,7 +124,7 @@ function resetZoukBetaData() {
 }
 
 function ProviderRow({ def }: { def: ProviderDef }) {
-  const [keys, setKeys] = useState<Record<string, string>>(getApiKeys);
+  const [keys, setKeys] = useState<Record<string, string>>(() => getApiKeys());
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState(false);

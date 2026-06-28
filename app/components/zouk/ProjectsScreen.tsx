@@ -166,14 +166,18 @@ function RepoWorkspace({
 
   useEffect(() => {
     if (!githubConnected || fetchedRef.current) {
-      return;
+      return undefined;
     }
 
     fetchedRef.current = true;
     setTreeState('loading');
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
     fetch(
       `/api/github-repo-tree?owner=${encodeURIComponent(m.owner)}&repo=${encodeURIComponent(m.repo)}&branch=${encodeURIComponent(m.branch)}`,
+      { signal: controller.signal },
     )
       .then((r) => r.json() as Promise<RepoTreeResponse>)
       .then((data) => {
@@ -187,9 +191,15 @@ function RepoWorkspace({
         }
       })
       .catch((err: Error) => {
-        setTreeError(err.message);
+        setTreeError(err.name === 'AbortError' ? 'Request timed out' : err.message);
         setTreeState('error');
-      });
+      })
+      .finally(() => clearTimeout(timeout));
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
   }, [githubConnected, m.owner, m.repo, m.branch]);
 
   return (
@@ -576,7 +586,10 @@ export function ProjectsScreen({ onOpen }: Props) {
   };
 
   const deleteProject = (name: string) => {
-    setProjects((prev) => prev.filter((p) => p.name !== name));
+    setProjects((prev) => {
+      const idx = prev.findIndex((p) => p.name === name);
+      return idx === -1 ? prev : prev.filter((_, i) => i !== idx);
+    });
   };
 
   const inputStyle: React.CSSProperties = {
