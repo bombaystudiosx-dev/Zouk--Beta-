@@ -76,6 +76,7 @@ const NAV_TASKS = [
 interface Props {
   section: string;
   onSection: (s: string) => void;
+  onSignOut?: () => void;
   userName?: string;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -138,12 +139,27 @@ function SectionLabel({ children, collapsed }: { children: string; collapsed?: b
 export function ZoukSidebar({
   section,
   onSection,
+  onSignOut,
   userName = 'Workspace',
   collapsed = false,
   onToggleCollapse,
 }: Props) {
   const initial = userName.charAt(0).toUpperCase();
   const w = collapsed ? 56 : 240;
+
+  const handleSignOut = () => {
+    try {
+      localStorage.removeItem('zouk_signed_in');
+    } catch {
+      // ignore
+    }
+
+    if (onSignOut) {
+      onSignOut();
+    } else {
+      window.location.reload();
+    }
+  };
 
   return (
     <div
@@ -307,48 +323,78 @@ export function ZoukSidebar({
         />
       </div>
 
-      {/* User card */}
+      {/* User card + sign out */}
       {!collapsed && (
-        <div style={{ padding: 12, borderTop: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
+        <div style={{ padding: 12, borderTop: '1px solid #1a1a1a' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #ec1d2e, #ff5664)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: 16,
+                flexShrink: 0,
+              }}
+            >
+              {initial}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p
+                style={{
+                  fontWeight: 600,
+                  color: '#e8e8e8',
+                  fontSize: 13,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {userName}
+              </p>
+              <p style={{ fontSize: 12, color: '#6a6a6a' }}>Alpha</p>
+            </div>
+          </div>
+          <button
+            onClick={handleSignOut}
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #ec1d2e, #ff5664)',
+              width: '100%',
+              padding: '8px 12px',
+              background: 'transparent',
+              border: '1px solid #2a2a2a',
+              borderRadius: 8,
+              color: '#6a6a6a',
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: 16,
-              flexShrink: 0,
+              gap: 6,
+              transition: 'all .15s',
             }}
           >
-            {initial}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p
-              style={{
-                fontWeight: 600,
-                color: '#e8e8e8',
-                fontSize: 13,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {userName}
-            </p>
-            <p style={{ fontSize: 12, color: '#6a6a6a' }}>Alpha</p>
-          </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Sign Out
+          </button>
         </div>
       )}
 
       {/* Collapsed user avatar */}
       {collapsed && (
         <div style={{ padding: '8px 0', borderTop: '1px solid #1a1a1a', display: 'flex', justifyContent: 'center' }}>
-          <div
+          <button
+            onClick={handleSignOut}
+            title="Sign Out"
             style={{
               width: 36,
               height: 36,
@@ -360,10 +406,12 @@ export function ZoukSidebar({
               color: '#fff',
               fontWeight: 700,
               fontSize: 14,
+              border: 'none',
+              cursor: 'pointer',
             }}
           >
             {initial}
-          </div>
+          </button>
         </div>
       )}
     </div>
