@@ -1,15 +1,34 @@
 import React, { useEffect, useState } from 'react';
+import {
+  validateGitHubRepoUrl,
+  parseGitHubRepoUrl,
+  createImportedProject,
+  buildRepoWorkspacePrompt,
+  type ImportedProject,
+} from '~/lib/zouk/githubImport';
+import { useConnectorState } from '~/lib/zouk/connectorState';
+import { CONNECTOR_REGISTRY } from '~/lib/zouk/connectorRegistry';
 
-interface Project {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface LocalProject {
   name: string;
   description: string;
   updatedAt: string;
   type: 'app' | 'website' | 'campaign' | 'automation';
 }
 
+type Project = LocalProject | ImportedProject;
+
+function isGitHubProject(p: Project): p is ImportedProject {
+  return p.type === 'github-repo';
+}
+
+// ─── Storage ──────────────────────────────────────────────────────────────────
+
 const STORAGE_KEY = 'zouk_beta_projects_v1';
 
-const STARTER_PROJECTS: Project[] = [
+const STARTER_PROJECTS: LocalProject[] = [
   {
     name: 'Zouk Builder Demo',
     description: 'Desktop AI app builder workspace with connectors, model routing, and deploy-ready workflows.',
@@ -29,13 +48,6 @@ const STARTER_PROJECTS: Project[] = [
     type: 'automation',
   },
 ];
-
-const TYPE_LABEL: Record<Project['type'], string> = {
-  app: 'App',
-  website: 'Website',
-  campaign: 'Campaign',
-  automation: 'Automation',
-};
 
 function readProjects(): Project[] {
   if (typeof window === 'undefined') {
@@ -58,6 +70,361 @@ function writeProjects(projects: Project[]) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
 }
 
+// ─── Type label ───────────────────────────────────────────────────────────────
+
+const TYPE_LABEL: Record<string, string> = {
+  app: 'App',
+  website: 'Website',
+  campaign: 'Campaign',
+  automation: 'Automation',
+  'github-repo': 'GitHub Repo',
+};
+
+// ─── Repo Workspace Overlay ───────────────────────────────────────────────────
+
+function RepoWorkspace({
+  project,
+  onClose,
+  onAskZouk,
+  githubConnected,
+}: {
+  project: ImportedProject;
+  onClose: () => void;
+  onAskZouk: (prompt: string) => void;
+  githubConnected: boolean;
+}) {
+  const m = project.githubMeta;
+  const importedDate = new Date(m.importedAt).toLocaleString();
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.82)',
+        zIndex: 10000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 640,
+          background: '#0a0a0a',
+          border: '1px solid #1e1e1e',
+          borderRadius: 14,
+          boxShadow: '0 24px 80px rgba(0,0,0,0.8)',
+          overflow: 'hidden',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: '18px 20px',
+            borderBottom: '1px solid #1a1a1a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 22 }}>🐙</span>
+            <div>
+              <h3 style={{ color: '#fff', fontSize: 16, fontWeight: 700, margin: 0 }}>
+                {m.owner}/{m.repo}
+              </h3>
+              <p style={{ color: '#555', fontSize: 12, margin: '3px 0 0' }}>Repo Workspace</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#666',
+              cursor: 'pointer',
+              fontSize: 20,
+              lineHeight: 1,
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: 20, overflowY: 'auto', flex: 1 }}>
+          {/* Metadata */}
+          <div
+            style={{
+              background: '#060606',
+              border: '1px solid #1a1a1a',
+              borderRadius: 10,
+              padding: '14px 16px',
+              marginBottom: 16,
+              display: 'flex',
+              gap: 24,
+              flexWrap: 'wrap',
+            }}
+          >
+            {[
+              { label: 'REPOSITORY', value: `${m.owner}/${m.repo}` },
+              { label: 'BRANCH', value: m.branch },
+              { label: 'IMPORTED', value: importedDate },
+            ].map((item) => (
+              <div key={item.label}>
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: '#444',
+                    display: 'block',
+                    marginBottom: 3,
+                    fontWeight: 600,
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  {item.label}
+                </span>
+                <span style={{ fontSize: 12, color: '#b5b5b5', fontWeight: 500 }}>{item.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Repo URL */}
+          <div
+            style={{
+              background: '#060606',
+              border: '1px solid #1a1a1a',
+              borderRadius: 8,
+              padding: '10px 14px',
+              marginBottom: 16,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+            }}
+          >
+            <span style={{ fontSize: 12, color: '#777', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+              {m.repoUrl}
+            </span>
+            <button
+              onClick={() => navigator.clipboard.writeText(m.repoUrl).catch(() => {})}
+              style={{
+                padding: '4px 10px',
+                background: '#111',
+                border: '1px solid #2a2a2a',
+                borderRadius: 6,
+                color: '#9a9a9a',
+                fontSize: 11,
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              Copy URL
+            </button>
+          </div>
+
+          {/* File tree state */}
+          <div
+            style={{
+              background: '#060606',
+              border: '1px solid #1a1a1a',
+              borderRadius: 10,
+              padding: 16,
+              marginBottom: 16,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <span style={{ color: '#444', fontSize: 13 }}>📁</span>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#777' }}>Repository Files</p>
+            </div>
+            {githubConnected ? (
+              <p style={{ fontSize: 12, color: '#eab308', lineHeight: 1.5 }}>
+                GitHub connected — backend repo file loading is the next phase. Files will appear here once the GitHub
+                API file-read pass is complete.
+              </p>
+            ) : (
+              <p style={{ fontSize: 12, color: '#555', lineHeight: 1.5 }}>
+                Repo file loading requires GitHub API access. Connect GitHub to load files.
+              </p>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={() => {
+                onClose();
+                onAskZouk(buildRepoWorkspacePrompt(project));
+              }}
+              style={{
+                flex: 1,
+                padding: '10px 12px',
+                background: 'rgba(236,29,46,0.12)',
+                border: '1px solid #ec1d2e',
+                borderRadius: 8,
+                color: '#ec1d2e',
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+            >
+              Ask Zouk About This Repo
+            </button>
+            {!githubConnected && (
+              <button
+                onClick={() => alert('Navigate to Connectors → GitHub to connect your account.')}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  background: '#111',
+                  border: '1px solid #2a2a2a',
+                  borderRadius: 8,
+                  color: '#9a9a9a',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                Connect GitHub
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Import Panel ─────────────────────────────────────────────────────────────
+
+function GitHubImportPanel({
+  onImport,
+  onCancel,
+}: {
+  onImport: (project: ImportedProject) => void;
+  onCancel: () => void;
+}) {
+  const [url, setUrl] = useState('');
+  const [branch, setBranch] = useState('main');
+  const [error, setError] = useState('');
+
+  const urlValid = validateGitHubRepoUrl(url);
+
+  const handleImport = () => {
+    const parsed = parseGitHubRepoUrl(url, branch);
+
+    if (!parsed) {
+      setError('Invalid GitHub URL. Use https://github.com/owner/repo');
+      return;
+    }
+
+    setError('');
+    onImport(createImportedProject(parsed));
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '10px 12px',
+    background: '#060606',
+    border: `1px solid ${error ? 'rgba(239,68,68,0.4)' : '#242424'}`,
+    borderRadius: 8,
+    color: '#e8e8e8',
+    fontSize: 13,
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
+
+  return (
+    <div
+      style={{
+        background: '#0a0a0a',
+        border: '1px solid rgba(236,29,46,0.2)',
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 28,
+      }}
+    >
+      <h3 style={{ color: '#fff', fontSize: 14, fontWeight: 600, marginBottom: 14 }}>Import from GitHub</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div>
+          <label style={{ display: 'block', color: '#b5b5b5', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+            Repository URL
+          </label>
+          <input
+            value={url}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setError('');
+            }}
+            placeholder="https://github.com/owner/repo"
+            style={inputStyle}
+            autoFocus
+          />
+          {error && <p style={{ color: '#ef4444', fontSize: 11, marginTop: 4 }}>{error}</p>}
+          {url && !urlValid && !error && (
+            <p style={{ color: '#555', fontSize: 11, marginTop: 4 }}>Must start with https://github.com/</p>
+          )}
+        </div>
+        <div>
+          <label style={{ display: 'block', color: '#b5b5b5', fontSize: 12, fontWeight: 600, marginBottom: 6 }}>
+            Branch
+          </label>
+          <input
+            value={branch}
+            onChange={(e) => setBranch(e.target.value)}
+            placeholder="main"
+            style={{ ...inputStyle, border: '1px solid #242424' }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+          <button
+            onClick={onCancel}
+            style={{
+              padding: '9px 16px',
+              background: '#111',
+              border: '1px solid #2a2a2a',
+              borderRadius: 8,
+              color: '#777',
+              fontSize: 13,
+              cursor: 'pointer',
+              fontWeight: 500,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            disabled={!urlValid}
+            onClick={handleImport}
+            style={{
+              flex: 1,
+              padding: '9px 16px',
+              background: urlValid ? 'rgba(236,29,46,0.12)' : '#111',
+              border: `1px solid ${urlValid ? '#ec1d2e' : '#1e1e1e'}`,
+              borderRadius: 8,
+              color: urlValid ? '#ec1d2e' : '#333',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: urlValid ? 'pointer' : 'not-allowed',
+            }}
+          >
+            Import Repo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 interface Props {
   onOpen: (projectName: string) => void;
 }
@@ -65,7 +432,12 @@ interface Props {
 export function ProjectsScreen({ onOpen }: Props) {
   const [projects, setProjects] = useState<Project[]>(readProjects);
   const [newName, setNewName] = useState('');
-  const [newType, setNewType] = useState<Project['type']>('app');
+  const [newType, setNewType] = useState<LocalProject['type']>('app');
+  const [showImport, setShowImport] = useState(false);
+  const [repoWorkspace, setRepoWorkspace] = useState<ImportedProject | null>(null);
+
+  const { getStatus } = useConnectorState(CONNECTOR_REGISTRY);
+  const githubConnected = getStatus('github') === 'connected';
 
   useEffect(() => {
     writeProjects(projects);
@@ -73,20 +445,37 @@ export function ProjectsScreen({ onOpen }: Props) {
 
   const createNew = () => {
     const name = newName.trim() || `New Zouk Project ${projects.length + 1}`;
-    const project: Project = {
+    const project: LocalProject = {
       name,
       description: 'Describe the build goal, target users, and what Zouk should generate next.',
       updatedAt: 'Just now',
       type: newType,
     };
-
     setProjects((prev) => [project, ...prev]);
     setNewName('');
     onOpen(name);
   };
 
+  const handleImport = (project: ImportedProject) => {
+    setProjects((prev) => [project, ...prev]);
+    setShowImport(false);
+  };
+
   const deleteProject = (name: string) => {
-    setProjects((prev) => prev.filter((project) => project.name !== name));
+    setProjects((prev) => prev.filter((p) => p.name !== name));
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '9px 12px',
+    background: '#060606',
+    border: '1px solid #242424',
+    borderRadius: 8,
+    color: '#e8e8e8',
+    fontSize: 13,
+    outline: 'none',
+    marginBottom: 10,
+    boxSizing: 'border-box',
   };
 
   return (
@@ -104,13 +493,15 @@ export function ProjectsScreen({ onOpen }: Props) {
       }}
     >
       <div style={{ maxWidth: 1400 }}>
+        {/* Header */}
         <div
           style={{
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
             gap: 20,
-            marginBottom: 28,
+            marginBottom: showImport ? 16 : 28,
+            flexWrap: 'wrap',
           }}
         >
           <div>
@@ -122,6 +513,7 @@ export function ProjectsScreen({ onOpen }: Props) {
               Stored locally for beta. Backend sync can replace this later.
             </p>
           </div>
+
           <div
             style={{
               minWidth: 320,
@@ -133,25 +525,14 @@ export function ProjectsScreen({ onOpen }: Props) {
           >
             <input
               value={newName}
-              onChange={(event) => setNewName(event.target.value)}
+              onChange={(e) => setNewName(e.target.value)}
               placeholder="Name the next project..."
-              style={{
-                width: '100%',
-                padding: '9px 12px',
-                background: '#060606',
-                border: '1px solid #242424',
-                borderRadius: 8,
-                color: '#e8e8e8',
-                fontSize: 13,
-                outline: 'none',
-                marginBottom: 10,
-                boxSizing: 'border-box',
-              }}
+              style={inputStyle}
             />
             <div style={{ display: 'flex', gap: 8 }}>
               <select
                 value={newType}
-                onChange={(event) => setNewType(event.target.value as Project['type'])}
+                onChange={(e) => setNewType(e.target.value as LocalProject['type'])}
                 style={{
                   flex: 1,
                   background: '#060606',
@@ -182,10 +563,30 @@ export function ProjectsScreen({ onOpen }: Props) {
               >
                 + New
               </button>
+              <button
+                onClick={() => setShowImport((v) => !v)}
+                style={{
+                  padding: '9px 14px',
+                  background: showImport ? 'rgba(88,166,255,0.12)' : '#111',
+                  border: `1px solid ${showImport ? 'rgba(88,166,255,0.4)' : '#2a2a2a'}`,
+                  borderRadius: 8,
+                  color: showImport ? '#58a6ff' : '#9a9a9a',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                🐙 Import
+              </button>
             </div>
           </div>
         </div>
 
+        {/* GitHub import panel */}
+        {showImport && <GitHubImportPanel onImport={handleImport} onCancel={() => setShowImport(false)} />}
+
+        {/* Project grid */}
         <div
           style={{
             display: 'grid',
@@ -193,73 +594,155 @@ export function ProjectsScreen({ onOpen }: Props) {
             gap: 16,
           }}
         >
-          {projects.map((project) => (
-            <div
-              key={project.name}
-              style={{
-                background: '#0a0a0a',
-                border: '1px solid #1a1a1a',
-                borderRadius: 12,
-                padding: 16,
-                animation: 'fadeIn .3s ease-out',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-                <p style={{ fontWeight: 600, color: '#fff', fontSize: 15 }}>{project.name}</p>
-                <span
-                  style={{
-                    height: 22,
-                    padding: '3px 8px',
-                    borderRadius: 999,
-                    background: 'rgba(236,29,46,0.10)',
-                    color: '#ec1d2e',
-                    fontSize: 10,
-                    fontWeight: 700,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {TYPE_LABEL[project.type]}
-                </span>
+          {projects.map((project) => {
+            const isGH = isGitHubProject(project);
+
+            return (
+              <div
+                key={project.name}
+                style={{
+                  background: '#0a0a0a',
+                  border: `1px solid ${isGH ? 'rgba(88,166,255,0.2)' : '#1a1a1a'}`,
+                  borderRadius: 12,
+                  padding: 16,
+                  animation: 'fadeIn .3s ease-out',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+                  <p style={{ fontWeight: 600, color: '#fff', fontSize: 15, wordBreak: 'break-word' }}>
+                    {isGH ? (
+                      <>
+                        <span style={{ color: '#555' }}>🐙 </span>
+                        {project.name}
+                      </>
+                    ) : (
+                      project.name
+                    )}
+                  </p>
+                  <span
+                    style={{
+                      height: 22,
+                      padding: '3px 8px',
+                      borderRadius: 999,
+                      background: isGH ? 'rgba(88,166,255,0.12)' : 'rgba(236,29,46,0.10)',
+                      color: isGH ? '#58a6ff' : '#ec1d2e',
+                      border: isGH ? '1px solid rgba(88,166,255,0.25)' : 'none',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {TYPE_LABEL[project.type] ?? project.type}
+                  </span>
+                </div>
+
+                <p style={{ fontSize: 13, color: '#9a9a9a', marginBottom: 12, lineHeight: 1.4 }}>
+                  {project.description}
+                </p>
+                <p style={{ fontSize: 11, color: '#6a6a6a', marginBottom: 14 }}>Updated {project.updatedAt}</p>
+
+                {/* Actions */}
+                {isGH ? (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => onOpen(buildRepoWorkspacePrompt(project as ImportedProject))}
+                      style={{
+                        flex: 1,
+                        padding: 8,
+                        background: 'rgba(236,29,46,0.12)',
+                        border: '1px solid #ec1d2e',
+                        borderRadius: 6,
+                        color: '#ec1d2e',
+                        fontWeight: 500,
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Open in Chat
+                    </button>
+                    <button
+                      onClick={() => setRepoWorkspace(project as ImportedProject)}
+                      style={{
+                        flex: 1,
+                        padding: 8,
+                        background: 'rgba(88,166,255,0.08)',
+                        border: '1px solid rgba(88,166,255,0.3)',
+                        borderRadius: 6,
+                        color: '#58a6ff',
+                        fontWeight: 500,
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Repo Workspace
+                    </button>
+                    <button
+                      onClick={() => deleteProject(project.name)}
+                      style={{
+                        padding: '8px 12px',
+                        background: '#111',
+                        border: '1px solid #242424',
+                        borderRadius: 6,
+                        color: '#555',
+                        fontWeight: 500,
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() => onOpen(project.name)}
+                      style={{
+                        flex: 1,
+                        padding: 8,
+                        background: 'rgba(236,29,46,0.12)',
+                        border: '1px solid #ec1d2e',
+                        borderRadius: 6,
+                        color: '#ec1d2e',
+                        fontWeight: 500,
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Open in Chat
+                    </button>
+                    <button
+                      onClick={() => deleteProject(project.name)}
+                      style={{
+                        padding: '8px 12px',
+                        background: '#111',
+                        border: '1px solid #242424',
+                        borderRadius: 6,
+                        color: '#777',
+                        fontWeight: 500,
+                        fontSize: 12,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
-              <p style={{ fontSize: 13, color: '#9a9a9a', marginBottom: 12, lineHeight: 1.4 }}>{project.description}</p>
-              <p style={{ fontSize: 11, color: '#6a6a6a', marginBottom: 14 }}>Updated {project.updatedAt}</p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={() => onOpen(project.name)}
-                  style={{
-                    flex: 1,
-                    padding: 8,
-                    background: 'rgba(236,29,46,0.12)',
-                    border: '1px solid #ec1d2e',
-                    borderRadius: 6,
-                    color: '#ec1d2e',
-                    fontWeight: 500,
-                    fontSize: 12,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Open in Chat
-                </button>
-                <button
-                  onClick={() => deleteProject(project.name)}
-                  style={{
-                    padding: '8px 12px',
-                    background: '#111',
-                    border: '1px solid #242424',
-                    borderRadius: 6,
-                    color: '#777',
-                    fontWeight: 500,
-                    fontSize: 12,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
+
+      {/* Repo Workspace modal */}
+      {repoWorkspace && (
+        <RepoWorkspace
+          project={repoWorkspace}
+          onClose={() => setRepoWorkspace(null)}
+          onAskZouk={(prompt) => onOpen(prompt)}
+          githubConnected={githubConnected}
+        />
+      )}
     </div>
   );
 }

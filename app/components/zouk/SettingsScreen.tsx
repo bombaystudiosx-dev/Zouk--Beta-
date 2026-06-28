@@ -1,8 +1,16 @@
 import React, { useState, useRef } from 'react';
 import Cookies from 'js-cookie';
 import { MODEL_GROUPS, ZOUK_PRESET_ID, getModelDisplay } from '~/lib/zouk/modelRegistry';
+import {
+  ACTION_CATEGORIES,
+  PERMISSION_LEVEL_LABELS,
+  RISK_LEVEL_COLORS,
+  RISK_LEVEL_LABELS,
+  loadPermissions,
+  revokePermission,
+} from '~/lib/zouk/agentPermissions';
 
-type Tab = 'profile' | 'user-flows' | 'ai-models' | 'workspace';
+type Tab = 'profile' | 'user-flows' | 'ai-models' | 'workspace' | 'agent-mode';
 
 interface UserFlow {
   name: string;
@@ -284,6 +292,9 @@ export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate,
   const [flows, setFlows] = useState<UserFlow[]>(DEMO_FLOWS);
   const [betaEnabled, setBetaEnabled] = useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
+  const [agentPerms, setAgentPerms] = useState(() => loadPermissions());
+
+  const refreshAgentPerms = () => setAgentPerms(loadPermissions());
 
   // Advanced model settings (stored in localStorage)
   const [temperature, setTemperature] = useState<number>(() => {
@@ -371,7 +382,7 @@ export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate,
             flexWrap: 'wrap',
           }}
         >
-          {(['profile', 'user-flows', 'ai-models', 'workspace'] as Tab[]).map((t) => (
+          {(['profile', 'user-flows', 'ai-models', 'workspace', 'agent-mode'] as Tab[]).map((t) => (
             <button key={t} onClick={() => setTab(t)} style={tabStyle(t)}>
               {t === 'profile'
                 ? 'Profile'
@@ -379,7 +390,9 @@ export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate,
                   ? 'User Flows'
                   : t === 'ai-models'
                     ? 'AI Models'
-                    : 'Workspace'}
+                    : t === 'workspace'
+                      ? 'Workspace'
+                      : 'Agent Mode'}
             </button>
           ))}
         </div>
@@ -773,6 +786,105 @@ export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate,
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* AGENT MODE */}
+        {tab === 'agent-mode' && (
+          <div style={{ animation: 'fadeIn .3s ease-out' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 4 }}>Agent Mode Permissions</h3>
+            <p style={{ fontSize: 13, color: '#9a9a9a', marginBottom: 6 }}>
+              Control what Zouk is allowed to do without asking each time.
+            </p>
+            <p style={{ fontSize: 12, color: '#555', marginBottom: 20 }}>
+              Beta permissions are stored locally in your browser until backend account sync is added.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+              {ACTION_CATEGORIES.map((cat) => {
+                const entry = agentPerms[cat.id];
+                const isHighRisk = cat.alwaysRequireConfirmation;
+
+                return (
+                  <div
+                    key={cat.id}
+                    style={{
+                      background: '#0a0a0a',
+                      border: `1px solid ${isHighRisk ? 'rgba(239,68,68,0.15)' : '#1a1a1a'}`,
+                      borderRadius: 10,
+                      padding: '12px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 180 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#e8e8e8' }}>{cat.label}</span>
+                        <span
+                          style={{
+                            fontSize: 10,
+                            padding: '1px 6px',
+                            borderRadius: 999,
+                            background: `${RISK_LEVEL_COLORS[cat.riskLevel]}18`,
+                            color: RISK_LEVEL_COLORS[cat.riskLevel],
+                            fontWeight: 600,
+                          }}
+                        >
+                          {RISK_LEVEL_LABELS[cat.riskLevel]}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: 11, color: '#555' }}>{cat.description}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 12, color: entry ? '#b5b5b5' : '#444' }}>
+                        {entry ? PERMISSION_LEVEL_LABELS[entry.level] : 'Ask Every Time'}
+                      </span>
+                      {entry && entry.level === 'always-allow' && !isHighRisk && (
+                        <button
+                          onClick={() => {
+                            revokePermission(cat.id);
+                            refreshAgentPerms();
+                          }}
+                          style={{
+                            padding: '4px 10px',
+                            background: 'transparent',
+                            border: '1px solid rgba(239,68,68,0.25)',
+                            borderRadius: 6,
+                            color: '#ef4444',
+                            fontSize: 11,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Revoke
+                        </button>
+                      )}
+                      {isHighRisk && <span style={{ fontSize: 10, color: '#444' }}>Always confirmed</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ marginTop: 8 }}>
+              <button
+                onClick={() => onNavigate('agent-mode')}
+                style={{
+                  padding: '10px 16px',
+                  background: 'rgba(236,29,46,0.12)',
+                  border: '1px solid #ec1d2e',
+                  borderRadius: 8,
+                  color: '#ec1d2e',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+              >
+                Open Agent Mode
+              </button>
             </div>
           </div>
         )}
