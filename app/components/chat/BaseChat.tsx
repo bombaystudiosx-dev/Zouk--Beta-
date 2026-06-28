@@ -465,10 +465,13 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 initial="smooth"
               >
                 <StickToBottom.Content className="flex flex-col gap-4 relative">
+                  {/* Hidden anchor so bolt's runAnimation can find #examples and resolve cleanly */}
+                  <div id="examples" style={{ display: 'none' }} />
                   {/* Spacer reserves top area so center branding (ring/logo) stays visible */}
                   {!chatStarted && <div style={{ minHeight: '22vh' }} />}
                   {!chatStarted && (
                     <div
+                      id="intro"
                       style={{
                         textAlign: 'center',
                         padding: '0 32px',
