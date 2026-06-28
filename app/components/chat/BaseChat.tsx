@@ -476,12 +476,13 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 initial="smooth"
               >
                 <StickToBottom.Content className="flex flex-col gap-4 relative">
+                  {/* Spacer reserves top area so center branding (ring/logo) stays visible */}
+                  {!chatStarted && <div style={{ minHeight: '38vh' }} />}
                   {!chatStarted && (
                     <div
                       style={{
                         textAlign: 'center',
                         padding: '0 32px',
-                        marginTop: 'auto',
                         paddingBottom: 16,
                       }}
                     >
