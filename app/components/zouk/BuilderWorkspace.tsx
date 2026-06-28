@@ -507,45 +507,159 @@ export function BuilderWorkspace({ onBack, zoukModel = ZOUK_PRESET_ID, setZoukMo
               ) : (
                 <div
                   style={{
-                    textAlign: 'center',
-                    padding: 32,
-                    color: '#9a9a9a',
-                    background: '#0e0e0e',
                     width: '100%',
                     height: '100%',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    background: '#050505',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 16,
                   }}
                 >
-                  <div style={{ opacity: 0.3 }}>
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                      <path d="M3 9h18M9 21V9" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 16, fontWeight: 600, color: '#3a3a3a', marginBottom: 6 }}>
-                      Preview will appear here
-                    </p>
-                    <p style={{ fontSize: 13, color: '#2a2a2a' }}>Start by describing your app in the chat panel →</p>
-                  </div>
-                  <button
-                    onClick={() => setPreviewUrl('about:blank')}
+                  {/* lava ground glow */}
+                  <div
                     style={{
-                      padding: '8px 20px',
-                      background: 'rgba(236,29,46,0.10)',
-                      border: '1px solid rgba(236,29,46,0.3)',
-                      borderRadius: 8,
-                      color: '#ec1d2e',
-                      fontSize: 13,
-                      cursor: 'pointer',
+                      position: 'absolute',
+                      bottom: 0,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: '140%',
+                      height: '45%',
+                      background:
+                        'radial-gradient(ellipse at 50% 100%, rgba(200,60,0,0.55) 0%, rgba(120,20,0,0.3) 40%, transparent 70%)',
+                      pointerEvents: 'none',
                     }}
-                  >
-                    Open blank canvas
-                  </button>
+                  />
+                  {/* top atmosphere */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '40%',
+                      background: 'radial-gradient(ellipse at 50% 0%, rgba(60,10,0,0.6) 0%, transparent 70%)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  {/* fire ring */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -58%)',
+                      width: device === 'phone' ? 260 : 340,
+                      height: device === 'phone' ? 260 : 340,
+                      borderRadius: '50%',
+                      border: '2px solid rgba(220,80,0,0.5)',
+                      boxShadow: '0 0 60px rgba(220,80,0,0.4), inset 0 0 60px rgba(180,40,0,0.2)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  {/* inner ring */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -58%)',
+                      width: device === 'phone' ? 220 : 290,
+                      height: device === 'phone' ? 220 : 290,
+                      borderRadius: '50%',
+                      border: '1px solid rgba(255,120,0,0.2)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  {/* central beam */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 2,
+                      height: '55%',
+                      background: 'linear-gradient(to top, rgba(255,120,20,0.8), rgba(255,80,0,0.4) 50%, transparent)',
+                      boxShadow: '0 0 12px rgba(255,100,0,0.6)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+
+                  {/* ZOUK logo */}
+                  <img
+                    src="/zouk-logo.png"
+                    alt="ZOUK"
+                    style={{
+                      width: device === 'phone' ? 110 : 150,
+                      height: 'auto',
+                      objectFit: 'contain',
+                      position: 'relative',
+                      zIndex: 2,
+                      filter: 'drop-shadow(0 0 20px rgba(220,80,0,0.8)) drop-shadow(0 0 40px rgba(180,40,0,0.5))',
+                      marginBottom: device === 'phone' ? 28 : 40,
+                    }}
+                  />
+
+                  {/* APP PREVIEW text */}
+                  <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
+                    <p
+                      style={{
+                        fontSize: device === 'phone' ? 22 : 32,
+                        fontWeight: 900,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: 'transparent',
+                        backgroundImage: 'linear-gradient(180deg, #ffb830 0%, #e06000 50%, #c03800 100%)',
+                        WebkitBackgroundClip: 'text',
+                        backgroundClip: 'text',
+                        textShadow: 'none',
+                        filter: 'drop-shadow(0 2px 8px rgba(220,80,0,0.7))',
+                        margin: 0,
+                        lineHeight: 1,
+                      }}
+                    >
+                      App Preview
+                    </p>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        marginTop: 10,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <div
+                        style={{
+                          flex: 1,
+                          height: 1,
+                          background: 'linear-gradient(to right, transparent, rgba(200,80,0,0.5))',
+                        }}
+                      />
+                      <p
+                        style={{
+                          fontSize: device === 'phone' ? 10 : 13,
+                          fontWeight: 700,
+                          letterSpacing: '0.25em',
+                          textTransform: 'uppercase',
+                          color: '#c05000',
+                          margin: 0,
+                        }}
+                      >
+                        Build Here
+                      </p>
+                      <div
+                        style={{
+                          flex: 1,
+                          height: 1,
+                          background: 'linear-gradient(to left, transparent, rgba(200,80,0,0.5))',
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
