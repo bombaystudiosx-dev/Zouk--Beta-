@@ -244,7 +244,7 @@ export function ZoukSidebar({ section, onSection, userName = 'Workspace' }: Prop
           >
             {userName}
           </p>
-          <p style={{ fontSize: 12, color: '#6a6a6a' }}>Pro Plan</p>
+          <p style={{ fontSize: 12, color: '#6a6a6a' }}>Alpha</p>
         </div>
       </div>
     </div>
