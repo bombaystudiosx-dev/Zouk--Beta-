@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Cookies from 'js-cookie';
 import type { Connector } from '~/lib/zouk/connectorRegistry';
 import type { ConnectorRuntimeState } from '~/lib/zouk/connectorState';
 
@@ -21,6 +22,19 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
 };
 
+function saveProviderCredential(connector: Connector, credential: string) {
+  if (connector.id !== 'openrouter' || !credential.trim()) {
+    return;
+  }
+
+  try {
+    const current = JSON.parse(Cookies.get('apiKeys') || '{}') as Record<string, string>;
+    Cookies.set('apiKeys', JSON.stringify({ ...current, OpenRouter: credential.trim() }));
+  } catch {
+    Cookies.set('apiKeys', JSON.stringify({ OpenRouter: credential.trim() }));
+  }
+}
+
 export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }: Props) {
   const [credential, setCredential] = useState('');
   const [showCredential, setShowCredential] = useState(false);
@@ -37,6 +51,11 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
   const isOAuth = connector.authType === 'oauth';
   const credentialLabel = connector.authType === 'token' ? 'Access token' : 'API key';
   const canSubmit = isOAuth || credential.trim().length >= 3;
+
+  const handleConnect = () => {
+    saveProviderCredential(connector, credential);
+    onConnected(connector, credential);
+  };
 
   return (
     <div
@@ -142,7 +161,7 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
                 </button>
               </div>
               <p style={{ color: '#777', fontSize: 12, lineHeight: 1.45, margin: '9px 0 0' }}>
-                Beta safety: Zouk stores the connection status and a masked preview locally, not the raw secret. Real production storage should use encrypted backend secrets.
+                Beta safety: Zouk stores the connection status and a masked preview locally, not the raw secret. OpenRouter keys also sync into the existing chat API-key cookie so the model can run.
               </p>
               {runtime?.credentialPreview && (
                 <p style={{ color: '#9a9a9a', fontSize: 12, margin: '10px 0 0' }}>
@@ -170,7 +189,7 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
             </button>
             <button
               disabled={!canSubmit}
-              onClick={() => onConnected(connector, credential)}
+              onClick={handleConnect}
               style={{
                 flex: 1,
                 padding: '10px 12px',
