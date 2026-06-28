@@ -526,20 +526,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   className={classNames('flex flex-col gap-2 mx-auto z-prompt mb-6', {
                     'sticky bottom-2 w-full max-w-chat': chatStarted,
                   })}
-                  style={
-                    !chatStarted
-                      ? {
-                          width: '100%',
-                          maxWidth: 820,
-                          borderRadius: 18,
-                          border: '1px solid rgba(236,29,46,0.45)',
-                          background: 'linear-gradient(180deg, #0b0809, #060606)',
-                          boxShadow: '0 0 40px rgba(236,29,46,0.12), inset 0 0 30px rgba(0,0,0,0.5)',
-                          overflow: 'hidden',
-                          animation: 'breathe 3s ease-in-out infinite',
-                        }
-                      : undefined
-                  }
                 >
                   <div className="flex flex-col gap-2">
                     {deployAlert && (

@@ -55,10 +55,15 @@ interface ChatBoxProps {
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   return (
     <div
-      style={{ background: '#0b0b0b', color: '#f4f4f4' }}
-      className={classNames(
-        'relative p-3 rounded-lg border border-zouk-elements-borderColor relative w-full max-w-chat mx-auto z-prompt',
-      )}
+      style={{
+        background: 'rgba(9,9,9,0.88)',
+        color: '#f4f4f4',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(236,29,46,0.35)',
+        borderRadius: 14,
+        boxShadow: '0 0 24px rgba(236,29,46,0.08)',
+      }}
+      className={classNames('relative p-3 w-full max-w-chat mx-auto z-prompt')}
     >
       <svg className={classNames(styles.PromptEffectContainer)}>
         <defs>
@@ -123,6 +128,13 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
       <div
         style={{ background: '#0d0d0d' }}
         className={classNames('relative shadow-xs border border-zouk-elements-borderColor rounded-lg')}
+        onFocusCapture={(e) => {
+          (e.currentTarget as HTMLDivElement).style.boxShadow =
+            '0 0 0 1px rgba(236,29,46,0.4), 0 0 16px rgba(236,29,46,0.12)';
+        }}
+        onBlurCapture={(e) => {
+          (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
+        }}
       >
         <textarea
           ref={props.textareaRef}
@@ -133,11 +145,11 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           )}
           onDragEnter={(e) => {
             e.preventDefault();
-            e.currentTarget.style.border = '2px solid #1488fc';
+            e.currentTarget.style.border = '2px solid rgba(236,29,46,0.7)';
           }}
           onDragOver={(e) => {
             e.preventDefault();
-            e.currentTarget.style.border = '2px solid #1488fc';
+            e.currentTarget.style.border = '2px solid rgba(236,29,46,0.7)';
           }}
           onDragLeave={(e) => {
             e.preventDefault();
