@@ -1,5 +1,5 @@
-appId: com.stackblitz.zouk.diy
-productName: Zouk Local
+appId: com.zouk.beta
+productName: Zouk
 directories:
   buildResources: build
   output: dist
@@ -55,10 +55,7 @@ npmRebuild: false
 
 publish:
   provider: github
-  owner: Derek-X-Wang
-  repo: zouk.local
-  private: true
+  owner: bombaystudiosx-dev
+  repo: Zouk--Beta-
+  private: false
   releaseType: release
-
-electronDownload:
-  mirror: https://npmmirror.com/mirrors/electron/
