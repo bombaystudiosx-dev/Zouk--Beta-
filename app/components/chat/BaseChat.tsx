@@ -450,6 +450,15 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 userEmail={zoukUserEmail}
                 onSaveProfile={handleSaveProfile}
                 onNavigate={setZoukSection}
+                provider={provider}
+                setProvider={setProvider}
+                model={model}
+                setModel={setModel}
+                providerList={providerList}
+                modelList={modelList}
+                apiKeys={apiKeys}
+                onApiKeysChange={onApiKeysChange}
+                isModelLoading={isModelLoading}
               />
             )}
             {/* Builder-workshop: redirect to home (chat engine is the builder) */}

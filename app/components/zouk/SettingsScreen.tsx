@@ -1,4 +1,11 @@
 import React, { useState, useRef } from 'react';
+import { ClientOnly } from 'remix-utils/client-only';
+import { ModelSelector } from '~/components/chat/ModelSelector';
+import { APIKeyManager } from '~/components/chat/APIKeyManager';
+import { LOCAL_PROVIDERS } from '~/lib/stores/settings';
+import { PROVIDER_LIST } from '~/utils/constants';
+import type { ProviderInfo } from '~/types/model';
+import type { ModelInfo } from '~/lib/modules/llm/types';
 
 type Tab = 'profile' | 'user-flows' | 'ai-models' | 'workspace';
 
@@ -12,6 +19,15 @@ interface Props {
   userEmail: string;
   onSaveProfile: (name: string, email: string) => void;
   onNavigate: (section: string) => void;
+  provider?: ProviderInfo;
+  setProvider?: (provider: ProviderInfo) => void;
+  model?: string;
+  setModel?: (model: string) => void;
+  providerList?: ProviderInfo[];
+  modelList?: ModelInfo[];
+  apiKeys?: Record<string, string>;
+  onApiKeysChange?: (providerName: string, apiKey: string) => void;
+  isModelLoading?: string;
 }
 
 const DEMO_FLOWS: UserFlow[] = [
@@ -19,7 +35,21 @@ const DEMO_FLOWS: UserFlow[] = [
   { name: 'Content Writer', description: 'Generates blog posts, emails, and landing page copy.' },
 ];
 
-export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate }: Props) {
+export function SettingsScreen({
+  userName,
+  userEmail,
+  onSaveProfile,
+  onNavigate,
+  provider,
+  setProvider,
+  model,
+  setModel,
+  providerList,
+  modelList,
+  apiKeys = {},
+  onApiKeysChange,
+  isModelLoading,
+}: Props) {
   const [tab, setTab] = useState<Tab>('profile');
   const [name, setName] = useState(userName);
   const [email, setEmail] = useState(userEmail);
@@ -255,10 +285,82 @@ export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate 
         {/* AI MODELS */}
         {tab === 'ai-models' && (
           <div style={{ animation: 'fadeIn .3s ease-out' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 8 }}>AI Model Settings</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#fff', marginBottom: 8 }}>AI Model &amp; API Keys</h3>
             <p style={{ fontSize: 13, color: '#9a9a9a', marginBottom: 24 }}>
-              Configure custom model responses and behavior
+              Select your provider and model, and enter your API key
             </p>
+
+            <div
+              style={{
+                background: '#0a0a0a',
+                border: '1px solid #1a1a1a',
+                borderRadius: 12,
+                padding: 20,
+                marginBottom: 20,
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: '#6a6a6a',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  marginBottom: 12,
+                }}
+              >
+                Provider &amp; Model
+              </p>
+              <ClientOnly>
+                {() => (
+                  <ModelSelector
+                    key={(provider?.name ?? '') + ':' + (modelList?.length ?? 0)}
+                    model={model}
+                    setModel={setModel}
+                    modelList={modelList ?? []}
+                    provider={provider}
+                    setProvider={setProvider}
+                    providerList={providerList ?? (PROVIDER_LIST as ProviderInfo[])}
+                    apiKeys={apiKeys}
+                    modelLoading={isModelLoading}
+                  />
+                )}
+              </ClientOnly>
+            </div>
+
+            {provider && !(LOCAL_PROVIDERS as string[]).includes(provider.name) && (
+              <div
+                style={{
+                  background: '#0a0a0a',
+                  border: '1px solid #1a1a1a',
+                  borderRadius: 12,
+                  padding: 20,
+                  marginBottom: 20,
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: '#6a6a6a',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    marginBottom: 12,
+                  }}
+                >
+                  API Key — {provider.name}
+                </p>
+                <ClientOnly>
+                  {() => (
+                    <APIKeyManager
+                      provider={provider!}
+                      apiKey={apiKeys[provider!.name] ?? ''}
+                      setApiKey={(key) => onApiKeysChange?.(provider!.name, key)}
+                    />
+                  )}
+                </ClientOnly>
+              </div>
+            )}
 
             <div style={{ marginBottom: 20, paddingBottom: 20, borderBottom: '1px solid #1a1a1a' }}>
               <label style={{ display: 'block', fontWeight: 600, color: '#fff', marginBottom: 8, fontSize: 14 }}>
@@ -304,21 +406,6 @@ export function SettingsScreen({ userName, userEmail, onSaveProfile, onNavigate 
                 style={{ ...inputStyle, minHeight: 120, fontFamily: 'monospace', resize: 'vertical' }}
               />
             </div>
-
-            <button
-              style={{
-                padding: '12px 24px',
-                background: 'rgba(236,29,46,0.12)',
-                border: '1px solid #ec1d2e',
-                borderRadius: 8,
-                color: '#ec1d2e',
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: 'pointer',
-              }}
-            >
-              Save AI Settings
-            </button>
           </div>
         )}
 
