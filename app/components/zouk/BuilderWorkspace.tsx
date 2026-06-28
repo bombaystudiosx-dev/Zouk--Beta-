@@ -33,6 +33,112 @@ const DEVICE_ICONS: Record<Device, React.ReactNode> = {
   ),
 };
 
+function PreviewContent({ previewUrl }: { device: Device; previewUrl: string; setPreviewUrl: (u: string) => void }) {
+  if (previewUrl) {
+    return <iframe src={previewUrl} style={{ width: '100%', height: '100%', border: 'none' }} title="App Preview" />;
+  }
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'radial-gradient(ellipse at 50% 100%, #3a0a00 0%, #1a0300 40%, #000 100%)',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '35%',
+          background: 'linear-gradient(to top, #ff4500 0%, #c23000 20%, #7a1500 50%, transparent 100%)',
+          opacity: 0.7,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -58%)',
+          width: '70%',
+          paddingBottom: '70%',
+          borderRadius: '50%',
+          border: '2px solid rgba(220,80,0,0.5)',
+          boxShadow: '0 0 60px rgba(220,80,0,0.4), inset 0 0 60px rgba(180,40,0,0.2)',
+          pointerEvents: 'none',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 2,
+          height: '55%',
+          background: 'linear-gradient(to top, rgba(255,120,20,0.8), rgba(255,80,0,0.4) 50%, transparent)',
+          boxShadow: '0 0 12px rgba(255,100,0,0.6)',
+          pointerEvents: 'none',
+        }}
+      />
+      <img
+        src="/zouk-logo.png"
+        alt="ZOUK"
+        style={{
+          width: '40%',
+          maxWidth: 140,
+          height: 'auto',
+          objectFit: 'contain',
+          position: 'relative',
+          zIndex: 2,
+          filter: 'drop-shadow(0 0 20px rgba(220,80,0,0.8)) drop-shadow(0 0 40px rgba(180,40,0,0.5))',
+          marginBottom: 20,
+        }}
+      />
+      <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', padding: '0 12px' }}>
+        <p
+          style={{
+            fontSize: 'clamp(14px, 5%, 32px)',
+            fontWeight: 900,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'transparent',
+            backgroundImage: 'linear-gradient(180deg, #ffb830 0%, #e06000 50%, #c03800 100%)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            filter: 'drop-shadow(0 2px 8px rgba(220,80,0,0.7))',
+            margin: 0,
+            lineHeight: 1,
+          }}
+        >
+          App Preview
+        </p>
+        <p
+          style={{
+            fontSize: 'clamp(8px, 3%, 13px)',
+            fontWeight: 700,
+            letterSpacing: '0.25em',
+            textTransform: 'uppercase',
+            color: '#c05000',
+            margin: '8px 0 0',
+          }}
+        >
+          Build Here
+        </p>
+      </div>
+    </div>
+  );
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   text: string;
@@ -476,193 +582,294 @@ export function BuilderWorkspace({ onBack, zoukModel = ZOUK_PRESET_ID, setZoukMo
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: device === 'desktop' ? 0 : 24,
+              padding: device === 'desktop' ? 0 : 32,
               overflow: 'hidden',
             }}
           >
-            <div
-              style={{
-                width: device === 'desktop' ? '100%' : deviceSize.width,
-                height: device === 'desktop' ? '100%' : deviceSize.height,
-                maxWidth: '100%',
-                maxHeight: '100%',
-                background: '#fff',
-                borderRadius: device === 'phone' ? 24 : device === 'tablet' ? 16 : 0,
-                boxShadow: device !== 'desktop' ? '0 24px 80px rgba(0,0,0,0.6)' : 'none',
-                overflow: 'hidden',
-                position: 'relative',
-                border: device !== 'desktop' ? '1px solid #2a2a2a' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'column',
-              }}
-            >
-              {previewUrl ? (
-                <iframe
-                  src={previewUrl}
-                  style={{ width: '100%', height: '100%', border: 'none' }}
-                  title="App Preview"
-                />
-              ) : (
+            {/* ── PHONE MOCKUP ── */}
+            {device === 'phone' && (
+              <div
+                style={{
+                  position: 'relative',
+                  height: '100%',
+                  maxHeight: 720,
+                  aspectRatio: '390/844',
+                  flexShrink: 0,
+                }}
+              >
+                {/* outer shell */}
                 <div
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    position: 'relative',
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: 52,
+                    background: 'linear-gradient(160deg,#2a2a2a 0%,#111 50%,#1c1c1c 100%)',
+                    boxShadow:
+                      '0 0 0 1px #3a3a3a, 0 0 0 2px #111, 0 32px 80px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)',
+                  }}
+                />
+                {/* side buttons left */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: -3,
+                    top: '18%',
+                    width: 3,
+                    height: 32,
+                    background: '#2a2a2a',
+                    borderRadius: '2px 0 0 2px',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: -3,
+                    top: '26%',
+                    width: 3,
+                    height: 52,
+                    background: '#2a2a2a',
+                    borderRadius: '2px 0 0 2px',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: -3,
+                    top: '34%',
+                    width: 3,
+                    height: 52,
+                    background: '#2a2a2a',
+                    borderRadius: '2px 0 0 2px',
+                  }}
+                />
+                {/* side button right */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: -3,
+                    top: '24%',
+                    width: 3,
+                    height: 80,
+                    background: '#2a2a2a',
+                    borderRadius: '0 2px 2px 0',
+                  }}
+                />
+                {/* screen area */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 10,
+                    borderRadius: 44,
                     overflow: 'hidden',
-                    background: '#050505',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    background: '#000',
                   }}
                 >
-                  {/* lava ground glow */}
+                  {/* dynamic island */}
                   <div
                     style={{
                       position: 'absolute',
-                      bottom: 0,
+                      top: 12,
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      width: '140%',
-                      height: '45%',
-                      background:
-                        'radial-gradient(ellipse at 50% 100%, rgba(200,60,0,0.55) 0%, rgba(120,20,0,0.3) 40%, transparent 70%)',
-                      pointerEvents: 'none',
+                      width: 110,
+                      height: 32,
+                      background: '#000',
+                      borderRadius: 20,
+                      zIndex: 10,
+                      boxShadow: '0 0 0 1px #1a1a1a',
                     }}
-                  />
-                  {/* top atmosphere */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '40%',
-                      background: 'radial-gradient(ellipse at 50% 0%, rgba(60,10,0,0.6) 0%, transparent 70%)',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                  {/* fire ring */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -58%)',
-                      width: device === 'phone' ? 260 : 340,
-                      height: device === 'phone' ? 260 : 340,
-                      borderRadius: '50%',
-                      border: '2px solid rgba(220,80,0,0.5)',
-                      boxShadow: '0 0 60px rgba(220,80,0,0.4), inset 0 0 60px rgba(180,40,0,0.2)',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                  {/* inner ring */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -58%)',
-                      width: device === 'phone' ? 220 : 290,
-                      height: device === 'phone' ? 220 : 290,
-                      borderRadius: '50%',
-                      border: '1px solid rgba(255,120,0,0.2)',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                  {/* central beam */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: 2,
-                      height: '55%',
-                      background: 'linear-gradient(to top, rgba(255,120,20,0.8), rgba(255,80,0,0.4) 50%, transparent)',
-                      boxShadow: '0 0 12px rgba(255,100,0,0.6)',
-                      pointerEvents: 'none',
-                    }}
-                  />
-
-                  {/* ZOUK logo */}
-                  <img
-                    src="/zouk-logo.png"
-                    alt="ZOUK"
-                    style={{
-                      width: device === 'phone' ? 110 : 150,
-                      height: 'auto',
-                      objectFit: 'contain',
-                      position: 'relative',
-                      zIndex: 2,
-                      filter: 'drop-shadow(0 0 20px rgba(220,80,0,0.8)) drop-shadow(0 0 40px rgba(180,40,0,0.5))',
-                      marginBottom: device === 'phone' ? 28 : 40,
-                    }}
-                  />
-
-                  {/* APP PREVIEW text */}
-                  <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
-                    <p
-                      style={{
-                        fontSize: device === 'phone' ? 22 : 32,
-                        fontWeight: 900,
-                        letterSpacing: '0.12em',
-                        textTransform: 'uppercase',
-                        color: 'transparent',
-                        backgroundImage: 'linear-gradient(180deg, #ffb830 0%, #e06000 50%, #c03800 100%)',
-                        WebkitBackgroundClip: 'text',
-                        backgroundClip: 'text',
-                        textShadow: 'none',
-                        filter: 'drop-shadow(0 2px 8px rgba(220,80,0,0.7))',
-                        margin: 0,
-                        lineHeight: 1,
-                      }}
-                    >
-                      App Preview
-                    </p>
+                  >
                     <div
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        marginTop: 10,
-                        justifyContent: 'center',
+                        position: 'absolute',
+                        right: 18,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        background: '#0a0a0a',
+                        border: '1px solid #222',
                       }}
-                    >
-                      <div
-                        style={{
-                          flex: 1,
-                          height: 1,
-                          background: 'linear-gradient(to right, transparent, rgba(200,80,0,0.5))',
-                        }}
-                      />
-                      <p
-                        style={{
-                          fontSize: device === 'phone' ? 10 : 13,
-                          fontWeight: 700,
-                          letterSpacing: '0.25em',
-                          textTransform: 'uppercase',
-                          color: '#c05000',
-                          margin: 0,
-                        }}
-                      >
-                        Build Here
-                      </p>
-                      <div
-                        style={{
-                          flex: 1,
-                          height: 1,
-                          background: 'linear-gradient(to left, transparent, rgba(200,80,0,0.5))',
-                        }}
-                      />
-                    </div>
+                    />
+                  </div>
+                  {/* screen content */}
+                  <div style={{ position: 'absolute', inset: 0 }}>
+                    <PreviewContent device={device} previewUrl={previewUrl} setPreviewUrl={setPreviewUrl} />
                   </div>
                 </div>
-              )}
-            </div>
+                {/* home indicator */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: 18,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 100,
+                    height: 4,
+                    background: 'rgba(255,255,255,0.25)',
+                    borderRadius: 2,
+                    zIndex: 10,
+                  }}
+                />
+              </div>
+            )}
+
+            {/* ── TABLET MOCKUP ── */}
+            {device === 'tablet' && (
+              <div
+                style={{
+                  position: 'relative',
+                  height: '100%',
+                  maxHeight: 700,
+                  aspectRatio: '768/1024',
+                  flexShrink: 0,
+                }}
+              >
+                {/* outer shell */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: 28,
+                    background: 'linear-gradient(160deg,#2a2a2a 0%,#111 50%,#1c1c1c 100%)',
+                    boxShadow:
+                      '0 0 0 1px #3a3a3a, 0 0 0 2px #111, 0 32px 80px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)',
+                  }}
+                />
+                {/* camera dot */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: 14,
+                    transform: 'translateY(-50%)',
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: '#1a1a1a',
+                    border: '1px solid #2a2a2a',
+                    zIndex: 10,
+                  }}
+                />
+                {/* side button */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    right: -3,
+                    top: '18%',
+                    width: 3,
+                    height: 60,
+                    background: '#2a2a2a',
+                    borderRadius: '0 2px 2px 0',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: -3,
+                    right: '25%',
+                    height: 3,
+                    width: 40,
+                    background: '#2a2a2a',
+                    borderRadius: '2px 2px 0 0',
+                  }}
+                />
+                {/* screen */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 14,
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    background: '#000',
+                  }}
+                >
+                  <PreviewContent device={device} previewUrl={previewUrl} setPreviewUrl={setPreviewUrl} />
+                </div>
+              </div>
+            )}
+
+            {/* ── DESKTOP / LAPTOP MOCKUP ── */}
+            {device === 'desktop' && (
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '16px 32px 0',
+                }}
+              >
+                {/* monitor body */}
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    maxWidth: 960,
+                    flexShrink: 1,
+                  }}
+                >
+                  {/* bezel */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(170deg,#232323 0%,#111 60%,#1a1a1a 100%)',
+                      borderRadius: '16px 16px 8px 8px',
+                      padding: '12px 12px 32px',
+                      boxShadow: '0 0 0 1px #333, 0 24px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.07)',
+                    }}
+                  >
+                    {/* camera dot */}
+                    <div
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: '#1a1a1a',
+                        border: '1px solid #2a2a2a',
+                        margin: '0 auto 8px',
+                      }}
+                    />
+                    {/* screen */}
+                    <div
+                      style={{
+                        borderRadius: 6,
+                        overflow: 'hidden',
+                        aspectRatio: '16/10',
+                        background: '#000',
+                        boxShadow: 'inset 0 0 0 1px #0a0a0a',
+                      }}
+                    >
+                      <PreviewContent device={device} previewUrl={previewUrl} setPreviewUrl={setPreviewUrl} />
+                    </div>
+                  </div>
+                  {/* stand neck */}
+                  <div
+                    style={{
+                      width: 80,
+                      height: 20,
+                      background: 'linear-gradient(to bottom,#1a1a1a,#141414)',
+                      margin: '0 auto',
+                      borderRadius: '0 0 4px 4px',
+                    }}
+                  />
+                  {/* base */}
+                  <div
+                    style={{
+                      width: 260,
+                      height: 10,
+                      background: 'linear-gradient(to bottom,#222,#111)',
+                      margin: '0 auto',
+                      borderRadius: '0 0 12px 12px',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Bottom status bar */}
