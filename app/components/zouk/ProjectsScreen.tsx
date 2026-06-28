@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import type { RepoTreeResponse, RepoTreeEntry } from '~/routes/api.github-repo-tree';
 import {
   validateGitHubRepoUrl,
   parseGitHubRepoUrl,
@@ -82,6 +83,68 @@ const TYPE_LABEL: Record<string, string> = {
 
 // ─── Repo Workspace Overlay ───────────────────────────────────────────────────
 
+function FileTree({ entries }: { entries: RepoTreeEntry[] }) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const dirs = new Set(entries.filter((e) => e.type === 'tree').map((e) => e.path));
+  const rootEntries = entries.filter((e) => !e.path.includes('/'));
+  const childrenOf = (dir: string) =>
+    entries.filter((e) => {
+      const rel = e.path.slice(dir.length + 1);
+      return e.path.startsWith(dir + '/') && !rel.includes('/');
+    });
+
+  const toggle = (path: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+
+      return next;
+    });
+
+  const renderEntry = (entry: RepoTreeEntry, depth = 0): React.ReactNode => {
+    const isDir = dirs.has(entry.path);
+    const name = entry.path.split('/').pop() ?? entry.path;
+    const open = expanded.has(entry.path);
+
+    return (
+      <div key={entry.path}>
+        <div
+          onClick={() => isDir && toggle(entry.path)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '3px 8px',
+            paddingLeft: 8 + depth * 16,
+            cursor: isDir ? 'pointer' : 'default',
+            borderRadius: 4,
+            color: isDir ? '#b5b5b5' : '#777',
+            fontSize: 12,
+          }}
+        >
+          <span style={{ flexShrink: 0, fontSize: 11 }}>{isDir ? (open ? '▾' : '▸') : '·'}</span>
+          <span style={{ fontFamily: 'monospace', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {name}
+          </span>
+          {!isDir && entry.size !== undefined && (
+            <span style={{ marginLeft: 'auto', color: '#3a3a3a', fontSize: 10, flexShrink: 0 }}>
+              {entry.size < 1024 ? `${entry.size}B` : `${(entry.size / 1024).toFixed(1)}KB`}
+            </span>
+          )}
+        </div>
+        {isDir && open && childrenOf(entry.path).map((child) => renderEntry(child, depth + 1))}
+      </div>
+    );
+  };
+
+  return <div>{rootEntries.map((e) => renderEntry(e, 0))}</div>;
+}
+
 function RepoWorkspace({
   project,
   onClose,
@@ -95,6 +158,39 @@ function RepoWorkspace({
 }) {
   const m = project.githubMeta;
   const importedDate = new Date(m.importedAt).toLocaleString();
+  const [treeState, setTreeState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [tree, setTree] = useState<RepoTreeEntry[]>([]);
+  const [treeError, setTreeError] = useState('');
+  const [truncated, setTruncated] = useState(false);
+  const fetchedRef = useRef(false);
+
+  useEffect(() => {
+    if (!githubConnected || fetchedRef.current) {
+      return;
+    }
+
+    fetchedRef.current = true;
+    setTreeState('loading');
+
+    fetch(
+      `/api/github-repo-tree?owner=${encodeURIComponent(m.owner)}&repo=${encodeURIComponent(m.repo)}&branch=${encodeURIComponent(m.branch)}`,
+    )
+      .then((r) => r.json() as Promise<RepoTreeResponse>)
+      .then((data) => {
+        if (data.ok) {
+          setTree(data.tree);
+          setTruncated(data.truncated);
+          setTreeState('done');
+        } else {
+          setTreeError(data.error);
+          setTreeState('error');
+        }
+      })
+      .catch((err: Error) => {
+        setTreeError(err.message);
+        setTreeState('error');
+      });
+  }, [githubConnected, m.owner, m.repo, m.branch]);
 
   return (
     <div
@@ -231,7 +327,7 @@ function RepoWorkspace({
             </button>
           </div>
 
-          {/* File tree state */}
+          {/* File tree */}
           <div
             style={{
               background: '#060606',
@@ -243,17 +339,35 @@ function RepoWorkspace({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
               <span style={{ color: '#444', fontSize: 13 }}>📁</span>
-              <p style={{ fontSize: 13, fontWeight: 600, color: '#777' }}>Repository Files</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: '#777', margin: 0 }}>Repository Files</p>
+              {treeState === 'done' && (
+                <span style={{ marginLeft: 'auto', fontSize: 11, color: '#555' }}>
+                  {tree.filter((e) => e.type === 'blob').length} files
+                  {truncated ? ' (truncated)' : ''}
+                </span>
+              )}
             </div>
-            {githubConnected ? (
-              <p style={{ fontSize: 12, color: '#eab308', lineHeight: 1.5 }}>
-                GitHub connected — backend repo file loading is the next phase. Files will appear here once the GitHub
-                API file-read pass is complete.
+            {!githubConnected && (
+              <p style={{ fontSize: 12, color: '#555', lineHeight: 1.5, margin: 0 }}>
+                Connect GitHub in Connectors to load the file tree.
               </p>
-            ) : (
-              <p style={{ fontSize: 12, color: '#555', lineHeight: 1.5 }}>
-                Repo file loading requires GitHub API access. Connect GitHub to load files.
-              </p>
+            )}
+            {githubConnected && treeState === 'idle' && (
+              <p style={{ fontSize: 12, color: '#555', margin: 0 }}>Waiting to load…</p>
+            )}
+            {githubConnected && treeState === 'loading' && (
+              <p style={{ fontSize: 12, color: '#6a6a6a', margin: 0 }}>Loading file tree…</p>
+            )}
+            {githubConnected && treeState === 'error' && (
+              <p style={{ fontSize: 12, color: '#ef4444', lineHeight: 1.5, margin: 0 }}>{treeError}</p>
+            )}
+            {githubConnected && treeState === 'done' && tree.length === 0 && (
+              <p style={{ fontSize: 12, color: '#555', margin: 0 }}>Repository appears to be empty.</p>
+            )}
+            {githubConnected && treeState === 'done' && tree.length > 0 && (
+              <div style={{ maxHeight: 280, overflowY: 'auto' }}>
+                <FileTree entries={tree} />
+              </div>
             )}
           </div>
 

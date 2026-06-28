@@ -135,21 +135,17 @@ export function BuilderWorkspace({ onBack, zoukModel = ZOUK_PRESET_ID, setZoukMo
       return;
     }
 
-    setMessages((prev) => [...prev, { role: 'user', text }]);
     setPrompt('');
     setSaveStatus('unsaved');
-    onSendMessage?.(text);
 
-    // Simulate assistant response
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', text: `Got it! Building "${text}"… Preview will update shortly.` },
-      ]);
+    // Send to the real chat engine — fills the chat input and navigates home
+    if (onSendMessage) {
+      onSendMessage(text);
+    } else {
+      // Fallback: show locally if no dispatch is wired
+      setMessages((prev) => [...prev, { role: 'user', text }]);
       setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-    }, 800);
-
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    }
   };
 
   const handleNameSave = () => {

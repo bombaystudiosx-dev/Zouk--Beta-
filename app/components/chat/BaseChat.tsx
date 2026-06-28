@@ -462,6 +462,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 }}
                 zoukModel={zoukSelectedModel}
                 setZoukModel={setZoukSelectedModel}
+                onSendMessage={insertChatPrompt}
               />
             )}
             {(chatStarted || zoukSection === 'home') && (

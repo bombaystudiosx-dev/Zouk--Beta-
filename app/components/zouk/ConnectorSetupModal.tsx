@@ -82,11 +82,10 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
     return null;
   }
 
-  const isOAuth = connector.authType === 'oauth';
   const isSupabase = connector.id === 'supabase';
   const isUpstash = connector.id === 'upstash';
   const credentialLabel = connector.authType === 'token' ? 'Access token' : 'API key';
-  const hasCredential = isOAuth || credential.trim().length >= 6;
+  const hasCredential = credential.trim().length >= 6;
   const canVerify =
     hasCredential &&
     (isSupabase ? extra.trim().startsWith('https://') : true) &&
@@ -100,14 +99,6 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
     setVerifyState('loading');
     setVerifyError('');
     setAccount(undefined);
-
-    if (isOAuth) {
-      // OAuth is not wired to a real backend yet — mark locally and note next step.
-      setVerifyState('success');
-      setAccount({ name: `${connector.name} (beta marker — real OAuth pending)` });
-
-      return;
-    }
 
     try {
       const res = await fetch('/api/connector/verify', {
@@ -142,11 +133,11 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
 
     if (connector.id === 'openrouter') {
       saveOpenRouterKey(credential);
-    } else if (!isOAuth) {
+    } else {
       saveGenericKey(connector.id, credential);
     }
 
-    onConnected(connector, isOAuth ? undefined : credential, account);
+    onConnected(connector, credential, account);
   };
 
   return (
@@ -211,181 +202,160 @@ export function ConnectorSetupModal({ connector, runtime, onClose, onConnected }
 
         {/* Body */}
         <div style={{ padding: 20 }}>
-          {isOAuth ? (
-            <div
-              style={{
-                background: '#111',
-                border: '1px solid #242424',
-                borderRadius: 10,
-                padding: '14px 16px',
-                color: '#aaa',
-                fontSize: 13,
-                lineHeight: 1.55,
-                marginBottom: 16,
-              }}
-            >
-              <strong style={{ color: '#e8e8e8' }}>OAuth placeholder</strong>
-              <br />
-              Real OAuth requires a backend callback route + GitHub App credentials. Clicking{' '}
-              <em>Verify &amp; Connect</em> will mark this connector locally so the rest of the UI keeps working during
-              the beta. OAuth will be replaced with a real flow in the next backend pass.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {/* Upstash email field */}
-              {isUpstash && (
-                <div>
-                  <label style={{ display: 'block', color: '#e8e8e8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
-                    Account email
-                  </label>
-                  <input
-                    value={extra}
-                    onChange={(e) => {
-                      setExtra(e.target.value);
-                      setVerifyState('idle');
-                    }}
-                    type="email"
-                    placeholder="you@example.com"
-                    style={inputStyle}
-                  />
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    The email you use to log in at console.upstash.com
-                  </p>
-                </div>
-              )}
-
-              {/* Supabase URL field */}
-              {isSupabase && (
-                <div>
-                  <label style={{ display: 'block', color: '#e8e8e8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
-                    Project URL
-                  </label>
-                  <input
-                    value={extra}
-                    onChange={(e) => {
-                      setExtra(e.target.value);
-                      setVerifyState('idle');
-                    }}
-                    type="url"
-                    placeholder="https://xxxx.supabase.co"
-                    style={inputStyle}
-                  />
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    Found under Project Settings → API → URL
-                  </p>
-                </div>
-              )}
-
-              {/* Credential field */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Upstash email field */}
+            {isUpstash && (
               <div>
                 <label style={{ display: 'block', color: '#e8e8e8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
-                  {isSupabase ? 'Anon / public key' : credentialLabel}
+                  Account email
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    ref={inputRef}
-                    value={credential}
-                    onChange={(e) => {
-                      setCredential(e.target.value);
-                      setVerifyState('idle');
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && verifyState === 'idle') {
-                        handleVerify();
-                      }
-                    }}
-                    type={showCredential ? 'text' : 'password'}
-                    placeholder={
-                      connector.id === 'openrouter'
-                        ? 'sk-or-...'
-                        : connector.id === 'github'
-                          ? 'ghp_... or github_pat_...'
-                          : connector.id === 'vercel'
-                            ? 'your Vercel token'
-                            : connector.id === 'supabase'
-                              ? 'eyJh... (anon key)'
-                              : `Paste ${connector.name} ${credentialLabel.toLowerCase()}`
-                    }
-                    style={{
-                      ...inputStyle,
-                      paddingRight: 44,
-                      border: `1px solid ${verifyState === 'error' ? '#ef444466' : '#242424'}`,
-                    }}
-                  />
-                  <button
-                    onClick={() => setShowCredential((v) => !v)}
-                    style={{
-                      position: 'absolute',
-                      right: 12,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: '#777',
-                      cursor: 'pointer',
-                      fontSize: 14,
-                    }}
-                    type="button"
-                    tabIndex={-1}
-                  >
-                    {showCredential ? '🙈' : '👁'}
-                  </button>
-                </div>
-
-                {/* Key hints */}
-                {connector.id === 'github' && (
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    Create a PAT at github.com/settings/tokens — needs <code>repo</code> scope for repo access.
-                  </p>
-                )}
-                {connector.id === 'vercel' && (
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    Generate at vercel.com/account/tokens — full account scope.
-                  </p>
-                )}
-                {connector.id === 'cloudflare' && (
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    Create at dash.cloudflare.com/profile/api-tokens — use the Edit Workers template.
-                  </p>
-                )}
-                {connector.id === 'netlify' && (
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    Create a personal access token at app.netlify.com/user/applications.
-                  </p>
-                )}
-                {connector.id === 'railway' && (
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    Create a token at railway.app/account/tokens.
-                  </p>
-                )}
-                {connector.id === 'render' && (
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    Create an API key at dashboard.render.com/u/account/api-keys.
-                  </p>
-                )}
-                {connector.id === 'neon' && (
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    Create an API key at console.neon.tech/app/settings/api-keys.
-                  </p>
-                )}
-                {connector.id === 'upstash' && (
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    API key found at console.upstash.com → Account → API Keys.
-                  </p>
-                )}
-                {connector.id === 'clerk' && (
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    Secret key (sk_test_… or sk_live_…) from dashboard.clerk.com → API Keys.
-                  </p>
-                )}
-                {connector.id === 'resend' && (
-                  <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
-                    Create an API key at resend.com/api-keys.
-                  </p>
-                )}
+                <input
+                  value={extra}
+                  onChange={(e) => {
+                    setExtra(e.target.value);
+                    setVerifyState('idle');
+                  }}
+                  type="email"
+                  placeholder="you@example.com"
+                  style={inputStyle}
+                />
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  The email you use to log in at console.upstash.com
+                </p>
               </div>
+            )}
+
+            {/* Supabase URL field */}
+            {isSupabase && (
+              <div>
+                <label style={{ display: 'block', color: '#e8e8e8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+                  Project URL
+                </label>
+                <input
+                  value={extra}
+                  onChange={(e) => {
+                    setExtra(e.target.value);
+                    setVerifyState('idle');
+                  }}
+                  type="url"
+                  placeholder="https://xxxx.supabase.co"
+                  style={inputStyle}
+                />
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  Found under Project Settings → API → URL
+                </p>
+              </div>
+            )}
+
+            {/* Credential field */}
+            <div>
+              <label style={{ display: 'block', color: '#e8e8e8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+                {isSupabase ? 'Anon / public key' : credentialLabel}
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  ref={inputRef}
+                  value={credential}
+                  onChange={(e) => {
+                    setCredential(e.target.value);
+                    setVerifyState('idle');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && verifyState === 'idle') {
+                      handleVerify();
+                    }
+                  }}
+                  type={showCredential ? 'text' : 'password'}
+                  placeholder={
+                    connector.id === 'openrouter'
+                      ? 'sk-or-...'
+                      : connector.id === 'github'
+                        ? 'ghp_... or github_pat_...'
+                        : connector.id === 'vercel'
+                          ? 'your Vercel token'
+                          : connector.id === 'supabase'
+                            ? 'eyJh... (anon key)'
+                            : `Paste ${connector.name} ${credentialLabel.toLowerCase()}`
+                  }
+                  style={{
+                    ...inputStyle,
+                    paddingRight: 44,
+                    border: `1px solid ${verifyState === 'error' ? '#ef444466' : '#242424'}`,
+                  }}
+                />
+                <button
+                  onClick={() => setShowCredential((v) => !v)}
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: '#777',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                  }}
+                  type="button"
+                  tabIndex={-1}
+                >
+                  {showCredential ? '🙈' : '👁'}
+                </button>
+              </div>
+
+              {/* Key hints */}
+              {connector.id === 'github' && (
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  Create a PAT at github.com/settings/tokens — needs <code>repo</code> scope for repo access.
+                </p>
+              )}
+              {connector.id === 'vercel' && (
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  Generate at vercel.com/account/tokens — full account scope.
+                </p>
+              )}
+              {connector.id === 'cloudflare' && (
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  Create at dash.cloudflare.com/profile/api-tokens — use the Edit Workers template.
+                </p>
+              )}
+              {connector.id === 'netlify' && (
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  Create a personal access token at app.netlify.com/user/applications.
+                </p>
+              )}
+              {connector.id === 'railway' && (
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  Create a token at railway.app/account/tokens.
+                </p>
+              )}
+              {connector.id === 'render' && (
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  Create an API key at dashboard.render.com/u/account/api-keys.
+                </p>
+              )}
+              {connector.id === 'neon' && (
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  Create an API key at console.neon.tech/app/settings/api-keys.
+                </p>
+              )}
+              {connector.id === 'upstash' && (
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  API key found at console.upstash.com → Account → API Keys.
+                </p>
+              )}
+              {connector.id === 'clerk' && (
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  Secret key (sk_test_… or sk_live_…) from dashboard.clerk.com → API Keys.
+                </p>
+              )}
+              {connector.id === 'resend' && (
+                <p style={{ color: '#555', fontSize: 12, margin: '6px 0 0' }}>
+                  Create an API key at resend.com/api-keys.
+                </p>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Verify result banner */}
           {verifyState === 'success' && account && (
