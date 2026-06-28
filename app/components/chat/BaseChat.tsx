@@ -17,6 +17,7 @@ import { SettingsScreen } from '~/components/zouk/SettingsScreen';
 import { Workbench } from '~/components/workbench/Workbench.client';
 import { classNames } from '~/utils/classNames';
 import { PROVIDER_LIST } from '~/utils/constants';
+import { ZOUK_PRESET_ID, ZOUK_PROVIDER_NAME, resolveZoukModel } from '~/lib/zouk/modelRegistry';
 import { Messages } from './Messages.client';
 import { getApiKeysFromCookies } from './APIKeyManager';
 import Cookies from 'js-cookie';
@@ -26,7 +27,6 @@ import type { ProviderInfo } from '~/types/model';
 import type { ActionAlert, SupabaseAlert, DeployAlert, LlmErrorAlertType } from '~/types/actions';
 import DeployChatAlert from '~/components/deploy/DeployAlert';
 import ChatAlert from './ChatAlert';
-import type { ModelInfo } from '~/lib/modules/llm/types';
 import ProgressCompilation from './ProgressCompilation';
 import type { ProgressAnnotation } from '~/types/context';
 import { SupabaseChatAlert } from '~/components/chat/SupabaseAlert';
@@ -141,12 +141,10 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
   ) => {
     const TEXTAREA_MAX_HEIGHT = chatStarted ? 400 : 200;
     const [apiKeys, setApiKeys] = useState<Record<string, string>>(getApiKeysFromCookies());
-    const [modelList, setModelList] = useState<ModelInfo[]>([]);
-    const [isModelSettingsCollapsed, setIsModelSettingsCollapsed] = useState(false);
+    const [zoukSelectedModel, setZoukSelectedModel] = useState(ZOUK_PRESET_ID);
     const [isListening, setIsListening] = useState(false);
     const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
     const [transcript, setTranscript] = useState('');
-    const [isModelLoading, setIsModelLoading] = useState<string | undefined>('all');
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
     const [zoukSection, setZoukSection] = useState('home');
 
@@ -165,12 +163,16 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       typeof window !== 'undefined' ? (localStorage.getItem('zouk_user_email') ?? '') : '',
     );
 
-    const handleOnboardingComplete = (name: string, email: string) => {
+    const handleOnboardingComplete = (name: string, email: string, openrouterKey: string) => {
       localStorage.setItem('zouk_user_name', name);
       localStorage.setItem('zouk_user_email', email);
       setZoukUserName(name);
       setZoukUserEmail(email);
       setShowOnboarding(false);
+
+      if (openrouterKey) {
+        onApiKeysChange(ZOUK_PROVIDER_NAME, openrouterKey);
+      }
     };
 
     const handleSaveProfile = (name: string, email: string) => {
@@ -196,6 +198,19 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         setQrModalOpen(true);
       }
     }, [expoUrl]);
+
+    useEffect(() => {
+      const resolved = resolveZoukModel(zoukSelectedModel);
+      setModel?.(resolved);
+
+      const openrouterProvider = (providerList || (PROVIDER_LIST as ProviderInfo[])).find(
+        (p) => p.name === ZOUK_PROVIDER_NAME,
+      );
+
+      if (openrouterProvider) {
+        setProvider?.(openrouterProvider as ProviderInfo);
+      }
+    }, [zoukSelectedModel]);
 
     useEffect(() => {
       if (data) {
@@ -247,55 +262,19 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
 
     useEffect(() => {
       if (typeof window !== 'undefined') {
-        let parsedApiKeys: Record<string, string> | undefined = {};
-
         try {
-          parsedApiKeys = getApiKeysFromCookies();
-          setApiKeys(parsedApiKeys);
+          setApiKeys(getApiKeysFromCookies());
         } catch (error) {
           console.error('Error loading API keys from cookies:', error);
           Cookies.remove('apiKeys');
         }
-
-        setIsModelLoading('all');
-        fetch('/api/models')
-          .then((response) => response.json())
-          .then((data) => {
-            const typedData = data as { modelList: ModelInfo[] };
-            setModelList(typedData.modelList);
-          })
-          .catch((error) => {
-            console.error('Error fetching model list:', error);
-          })
-          .finally(() => {
-            setIsModelLoading(undefined);
-          });
       }
-    }, [providerList, provider]);
+    }, []);
 
-    const onApiKeysChange = async (providerName: string, apiKey: string) => {
+    const onApiKeysChange = (providerName: string, apiKey: string) => {
       const newApiKeys = { ...apiKeys, [providerName]: apiKey };
       setApiKeys(newApiKeys);
       Cookies.set('apiKeys', JSON.stringify(newApiKeys));
-
-      setIsModelLoading(providerName);
-
-      let providerModels: ModelInfo[] = [];
-
-      try {
-        const response = await fetch(`/api/models/${encodeURIComponent(providerName)}`);
-        const data = await response.json();
-        providerModels = (data as { modelList: ModelInfo[] }).modelList;
-      } catch (error) {
-        console.error('Error loading dynamic models for:', providerName, error);
-      }
-
-      // Only update models for the specific provider
-      setModelList((prevModels) => {
-        const otherModels = prevModels.filter((model) => model.provider !== providerName);
-        return [...otherModels, ...providerModels];
-      });
-      setIsModelLoading(undefined);
     };
 
     const startListening = () => {
@@ -450,15 +429,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 userEmail={zoukUserEmail}
                 onSaveProfile={handleSaveProfile}
                 onNavigate={setZoukSection}
-                provider={provider}
-                setProvider={setProvider}
-                model={model}
-                setModel={setModel}
-                providerList={providerList}
-                modelList={modelList}
-                apiKeys={apiKeys}
-                onApiKeysChange={onApiKeysChange}
-                isModelLoading={isModelLoading}
+                zoukModel={zoukSelectedModel}
+                setZoukModel={setZoukSelectedModel}
               />
             )}
             {/* Builder-workshop: redirect to home (chat engine is the builder) */}
@@ -576,17 +548,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   </div>
                   {progressAnnotations && <ProgressCompilation data={progressAnnotations} />}
                   <ChatBox
-                    isModelSettingsCollapsed={isModelSettingsCollapsed}
-                    setIsModelSettingsCollapsed={setIsModelSettingsCollapsed}
-                    provider={provider}
-                    setProvider={setProvider}
-                    providerList={providerList || (PROVIDER_LIST as ProviderInfo[])}
-                    model={model}
-                    setModel={setModel}
-                    modelList={modelList}
-                    apiKeys={apiKeys}
-                    isModelLoading={isModelLoading}
-                    onApiKeysChange={onApiKeysChange}
+                    zoukModel={zoukSelectedModel}
+                    setZoukModel={setZoukSelectedModel}
                     uploadedFiles={uploadedFiles}
                     setUploadedFiles={setUploadedFiles}
                     imageDataList={imageDataList}

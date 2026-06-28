@@ -1,10 +1,6 @@
 import React from 'react';
 import { ClientOnly } from 'remix-utils/client-only';
 import { classNames } from '~/utils/classNames';
-import { PROVIDER_LIST } from '~/utils/constants';
-import { ModelSelector } from '~/components/chat/ModelSelector';
-import { APIKeyManager } from './APIKeyManager';
-import { LOCAL_PROVIDERS } from '~/lib/stores/settings';
 import FilePreview from './FilePreview';
 import { ScreenshotStateManager } from './ScreenshotStateManager';
 import { SendButton } from './SendButton.client';
@@ -14,22 +10,16 @@ import { SpeechRecognitionButton } from '~/components/chat/SpeechRecognition';
 import { SupabaseConnection } from './SupabaseConnection';
 import { ExpoQrModal } from '~/components/workbench/ExpoQrModal';
 import styles from './BaseChat.module.scss';
-import type { ProviderInfo } from '~/types/model';
 import { ColorSchemeDialog } from '~/components/ui/ColorSchemeDialog';
 import type { DesignScheme } from '~/types/design-scheme';
 import type { ElementInfo } from '~/components/workbench/Inspector';
 import { McpTools } from './MCPTools';
 import { WebSearch } from './WebSearch.client';
+import { ZoukModelPicker } from './ZoukModelPicker';
 
 interface ChatBoxProps {
-  isModelSettingsCollapsed: boolean;
-  setIsModelSettingsCollapsed: (collapsed: boolean) => void;
-  provider: any;
-  providerList: any[];
-  modelList: any[];
-  apiKeys: Record<string, string>;
-  isModelLoading: string | undefined;
-  onApiKeysChange: (providerName: string, apiKey: string) => void;
+  zoukModel: string;
+  setZoukModel: (id: string) => void;
   uploadedFiles: File[];
   imageDataList: string[];
   textareaRef: React.RefObject<HTMLTextAreaElement> | undefined;
@@ -47,9 +37,6 @@ interface ChatBoxProps {
   qrModalOpen: boolean;
   setQrModalOpen: (open: boolean) => void;
   handleFileUpload: () => void;
-  setProvider?: ((provider: ProviderInfo) => void) | undefined;
-  model?: string | undefined;
-  setModel?: ((model: string) => void) | undefined;
   setUploadedFiles?: ((files: File[]) => void) | undefined;
   setImageDataList?: ((dataList: string[]) => void) | undefined;
   handleInputChange?: ((event: React.ChangeEvent<HTMLTextAreaElement>) => void) | undefined;
@@ -71,12 +58,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
       style={{ background: '#0b0b0b', color: '#f4f4f4' }}
       className={classNames(
         'relative p-3 rounded-lg border border-zouk-elements-borderColor relative w-full max-w-chat mx-auto z-prompt',
-
-        /*
-         * {
-         *   'sticky bottom-2': chatStarted,
-         * },
-         */
       )}
     >
       <svg className={classNames(styles.PromptEffectContainer)}>
@@ -105,36 +86,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         <rect className={classNames(styles.PromptEffectLine)} pathLength="100" strokeLinecap="round"></rect>
         <rect className={classNames(styles.PromptShine)} x="48" y="24" width="70" height="1"></rect>
       </svg>
-      <div>
-        <ClientOnly>
-          {() => (
-            <div className={props.isModelSettingsCollapsed ? 'hidden' : ''}>
-              <ModelSelector
-                key={props.provider?.name + ':' + props.modelList.length}
-                model={props.model}
-                setModel={props.setModel}
-                modelList={props.modelList}
-                provider={props.provider}
-                setProvider={props.setProvider}
-                providerList={props.providerList || (PROVIDER_LIST as ProviderInfo[])}
-                apiKeys={props.apiKeys}
-                modelLoading={props.isModelLoading}
-              />
-              {(props.providerList || []).length > 0 &&
-                props.provider &&
-                !LOCAL_PROVIDERS.includes(props.provider.name) && (
-                  <APIKeyManager
-                    provider={props.provider}
-                    apiKey={props.apiKeys[props.provider.name] || ''}
-                    setApiKey={(key) => {
-                      props.onApiKeysChange(props.provider.name, key);
-                    }}
-                  />
-                )}
-            </div>
-          )}
-        </ClientOnly>
-      </div>
       <FilePreview
         files={props.uploadedFiles}
         imageDataList={props.imageDataList}
@@ -197,12 +148,13 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
             e.currentTarget.style.border = '1px solid var(--zouk-elements-borderColor)';
 
             const files = Array.from(e.dataTransfer.files);
+
             files.forEach((file) => {
               if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
 
-                reader.onload = (e) => {
-                  const base64Image = e.target?.result as string;
+                reader.onload = (ev) => {
+                  const base64Image = ev.target?.result as string;
                   props.setUploadedFiles?.([...props.uploadedFiles, file]);
                   props.setImageDataList?.([...props.imageDataList, base64Image]);
                 };
@@ -223,7 +175,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 return;
               }
 
-              // ignore if using input method engine
               if (event.nativeEvent.isComposing) {
                 return;
               }
@@ -248,7 +199,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
             <SendButton
               show={props.input.length > 0 || props.isStreaming || props.uploadedFiles.length > 0}
               isStreaming={props.isStreaming}
-              disabled={!props.providerList || props.providerList.length === 0}
+              disabled={false}
               onClick={(event) => {
                 if (props.isStreaming) {
                   props.handleStop?.();
@@ -263,7 +214,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           )}
         </ClientOnly>
         <div className="flex justify-between items-center text-sm p-4 pt-2">
-          <div className="flex gap-1 items-center">
+          <div className="flex gap-1 items-center flex-wrap">
             <ColorSchemeDialog designScheme={props.designScheme} setDesignScheme={props.setDesignScheme} />
             <McpTools />
             <IconButton title="Upload file" className="transition-all" onClick={() => props.handleFileUpload()}>
@@ -285,7 +236,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 <div className="i-zouk:stars text-xl"></div>
               )}
             </IconButton>
-
             <SpeechRecognitionButton
               isListening={props.isListening}
               onStart={props.startListening}
@@ -305,24 +255,15 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                   props.setChatMode?.(props.chatMode === 'discuss' ? 'build' : 'discuss');
                 }}
               >
-                <div className={`i-ph:chats text-xl`} />
+                <div className="i-ph:chats text-xl" />
                 {props.chatMode === 'discuss' ? <span>Discuss</span> : <span />}
               </IconButton>
             )}
-            <IconButton
-              title="Model Settings"
-              className={classNames('transition-all flex items-center gap-1', {
-                'bg-zouk-elements-item-backgroundAccent text-zouk-elements-item-contentAccent':
-                  props.isModelSettingsCollapsed,
-                'bg-zouk-elements-item-backgroundDefault text-zouk-elements-item-contentDefault':
-                  !props.isModelSettingsCollapsed,
-              })}
-              onClick={() => props.setIsModelSettingsCollapsed(!props.isModelSettingsCollapsed)}
-              disabled={!props.providerList || props.providerList.length === 0}
-            >
-              <div className={`i-ph:caret-${props.isModelSettingsCollapsed ? 'right' : 'down'} text-lg`} />
-              {props.isModelSettingsCollapsed ? <span className="text-xs">{props.model}</span> : <span />}
-            </IconButton>
+            <ClientOnly>
+              {() => (
+                <ZoukModelPicker value={props.zoukModel} onChange={props.setZoukModel} disabled={props.isStreaming} />
+              )}
+            </ClientOnly>
           </div>
           {props.input.length > 3 ? (
             <div className="text-xs text-zouk-elements-textTertiary">
